@@ -3,11 +3,15 @@ package server
 import (
 	proto "github.com/golang/protobuf/proto"
 	pb "im/accessserver/bean"
+	"im/accessserver/coder"
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
+
+var linkCount int = 0
 
 func ListenOnPort() {
 
@@ -38,27 +42,47 @@ func ListenOnPort() {
 	}
 }
 
+var mutex sync.Mutex
+
 func handleConnection(conn *net.TCPConn) {
 
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
 
-	buf := make([]byte, 1024)
+	decoder := coder.NEWDecoder()
 
-	count, err := conn.Read(buf)
+	mutex.Lock()
+	linkCount++
+	log.Println("linkCount=", linkCount)
+	mutex.Unlock()
 
-	if err != nil {
-		log.Println(err.Error())
+	defer func() {
+		mutex.Lock()
+		linkCount--
+		log.Println("linkCount=", linkCount)
+		mutex.Unlock()
+		conn.Close()
+	}()
+
+	buf := make([]byte, 512)
+	for true {
+		count, err := conn.Read(buf)
+		if err != nil {
+			//log.Println(err.Error())
+			break
+		}
+		messages, err := decoder.Decode(buf[0:count])
+		if err != nil {
+			//log.Println(err.Error())
+			break
+		}
+		for _, v := range messages {
+			person := &pb.Person{}
+			if err := proto.Unmarshal(v.MessageBuf, person); err != nil {
+				log.Println(err.Error())
+				return
+			}
+		}
 	}
-	log.Println(count)
-	person := &pb.Person{}
 
-	log.Println(proto.MessageName(person))
-
-	if err := proto.Unmarshal(buf[:count], person); err != nil {
-		log.Println(err.Error())
-	}
-	log.Println(proto.MessageName(person))
-
-	log.Println(person.String())
 }

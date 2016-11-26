@@ -1,10 +1,11 @@
 package coder
 
-import ()
+import (
+//"log"
+)
 
 type Decoder struct {
 	buffer        []byte
-	index         int
 	messageType   *int
 	messageLength *int
 }
@@ -25,7 +26,6 @@ func NEWDecoder() *Decoder {
 
 func (d *Decoder) Reset() {
 	d.buffer = make([]byte, 0)
-	d.index = 0
 	d.messageType = nil
 	d.messageLength = nil
 }
@@ -33,12 +33,14 @@ func (d *Decoder) Reset() {
 func (d *Decoder) decoder(buf []byte) (messages []*Message, err error) {
 
 	d.buffer = append(d.buffer, buf...)
+	//log.Println(d.buffer)
 
 	if d.messageType == nil {
 		retType, retCountByte, retNeedMore := decodeByteToType(d.buffer)
 		if retNeedMore {
 			return
 		}
+		//log.Println(retType, "+", retCountByte, "+", retNeedMore)
 		d.messageType = &retType
 		d.buffer = d.buffer[retCountByte:]
 	}
@@ -47,6 +49,7 @@ func (d *Decoder) decoder(buf []byte) (messages []*Message, err error) {
 		if retNeedMore {
 			return
 		}
+		//log.Println(retLength, "+", retCountByte, "+", retNeedMore)
 		d.messageLength = &retLength
 		d.buffer = d.buffer[retCountByte:]
 	}
@@ -59,10 +62,13 @@ func (d *Decoder) decoder(buf []byte) (messages []*Message, err error) {
 		MessageType: *d.messageType,
 		MessageBuf:  d.buffer[0:*d.messageLength],
 	}
+	//log.Println(message.MessageBuf)
 
 	messages = append(messages, message)
 
 	d.buffer = d.buffer[*d.messageLength:]
+	d.messageType = nil
+	d.messageLength = nil
 
 	temp, err := d.decoder(make([]byte, 0))
 

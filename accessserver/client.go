@@ -7,5 +7,6 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
-	client.ConnectToPort()
+	//client.ConnectToPort()
+	client.ClientMulitiConnect()
 }
