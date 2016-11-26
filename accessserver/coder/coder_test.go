@@ -104,7 +104,7 @@ func TestDecoder(t *testing.T) {
 	}
 
 	for _, v := range test_data {
-		retLength, retCountByte, retNeedMore := getByteLen(v.byt)
+		retLength, retCountByte, retNeedMore := decodeByteToLength(v.byt)
 		if !(v.retLength == retLength &&
 			v.retCountByte == retCountByte &&
 			v.retNeedMore == retNeedMore) {
