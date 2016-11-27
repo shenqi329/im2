@@ -5,14 +5,28 @@ import (
 	"testing"
 )
 
-type encoderArray struct {
+// func TestDecoder(t *testing.T) {
+
+// 	decoder := &Decoder{}
+
+// 	messages, err := decoder.decoder([]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
+
+// 	if err == nil {
+// 		t.Error("错误的应该解析出来")
+// 	}
+// 	if len(messages) > 0 {
+// 		t.Error("错误的数据解析出来了,messages = ", messages)
+// 	}
+// }
+
+type encoderLengthToByteArray struct {
 	length int
 	result []byte
 }
 
-func TestEncoder(t *testing.T) {
+func TestEncoderLengthToByte(t *testing.T) {
 
-	var test_data = []encoderArray{
+	var test_data = []encoderLengthToByteArray{
 		{0, []byte{0}},
 		{1, []byte{1}},
 
@@ -37,18 +51,17 @@ func TestEncoder(t *testing.T) {
 			t.Error("encodeLengthToByte(%d)", v.length, "falil", "ret=", ret)
 		}
 	}
-
 }
 
-type decoderArray struct {
+type decodeByteToLengthArray struct {
 	retLength    int
 	retCountByte int
 	retNeedMore  bool
 	byt          []byte
 }
 
-func TestDecoder(t *testing.T) {
-	var test_data = []decoderArray{
+func TestDecodeByteToLength(t *testing.T) {
+	var test_data = []decodeByteToLengthArray{
 
 		//刚刚好
 		{0, 1, false, []byte{0}},

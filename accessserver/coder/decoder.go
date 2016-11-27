@@ -1,7 +1,7 @@
 package coder
 
 import (
-//"log"
+	"errors"
 )
 
 type Decoder struct {
@@ -24,11 +24,6 @@ func NEWDecoder() *Decoder {
 	return decoder
 }
 
-func Addr() string {
-	//return "192.168.0.107:6000"
-	return "172.17.0.2:6000"
-}
-
 func (d *Decoder) Reset() {
 	d.buffer = make([]byte, 0)
 	d.messageType = nil
@@ -45,6 +40,10 @@ func (d *Decoder) decoder(buf []byte) (messages []*Message, err error) {
 		if retNeedMore {
 			return
 		}
+		if retCountByte > 4 {
+			err = errors.New("message type too long , illegal")
+			return
+		}
 		//log.Println(retType, "+", retCountByte, "+", retNeedMore)
 		d.messageType = &retType
 		d.buffer = d.buffer[retCountByte:]
@@ -52,6 +51,10 @@ func (d *Decoder) decoder(buf []byte) (messages []*Message, err error) {
 	if d.messageLength == nil {
 		retLength, retCountByte, retNeedMore := decodeByteToLength(d.buffer)
 		if retNeedMore {
+			return
+		}
+		if retCountByte > 5 {
+			err = errors.New("message content too long ,illegal")
 			return
 		}
 		//log.Println(retLength, "+", retCountByte, "+", retNeedMore)

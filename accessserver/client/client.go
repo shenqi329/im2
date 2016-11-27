@@ -1,18 +1,24 @@
-package client
+package main
 
 import (
-	pb "im/accessserver/bean"
+	"im/accessserver/bean"
 	"im/accessserver/coder"
+	"im/accessserver/server"
 	"log"
 	"net"
 	"os"
 	"time"
 )
 
-func ConnectToPort() {
+func main() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
+	connectToPort()
+}
+
+func connectToPort() {
 
 	//raddr, err := net.ResolveTCPAddr("tcp", "172.17.0.2:6000")
-	raddr, err := net.ResolveTCPAddr("tcp", coder.Addr())
+	raddr, err := net.ResolveTCPAddr("tcp", server.ServerAddr())
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
