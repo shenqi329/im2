@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/golang/protobuf/proto"
 	"im/protocal/bean"
 	"im/protocal/coder"
 	"log"
@@ -41,10 +42,10 @@ func ListenOnPort() {
 			continue
 		}
 
-		decoder.Decode(buffer[0:count])
+		messages, err := decoder.Decode(buffer[0:count])
 		if err != nil {
 			log.Println(err.Error())
-			break
+			continue
 		}
 		//处理
 		for _, message := range messages {
@@ -66,16 +67,50 @@ func handleMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Messag
 		log.Println("消息格式错误")
 		return
 	}
+
 	log.Println(proto.CompactTextString(protoMessage))
 
 	switch message.MessageType {
-	case MessageTypeDeviceRegisteRequest:
+	case bean.MessageTypeDeviceRegisteRequest:
 		{
-			response = &bean.DeviceLoginResponse{}
+			handleRegisterRequest(listen, addr, protoMessage.(*bean.DeviceRegisteRequest))
 		}
-	case MessageTypeDeviceLoginRequest:
+	case bean.MessageTypeDeviceLoginRequest:
 		{
-
+			handleLoginRequest(listen, addr, protoMessage.(*bean.DeviceLoginRequest))
 		}
 	}
+}
+
+func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest) {
+
+	response := &bean.DeviceRegisteResponse{
+		Rid:   request.Rid,
+		Code:  "00000001",
+		Desc:  "success",
+		Token: "a token from proxyserver",
+	}
+
+	b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	listen.WriteTo(b, addr)
+}
+
+func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest) {
+
+	response := &bean.DeviceLoginResponse{
+		Rid:  request.Rid,
+		Code: "00000001",
+		Desc: "success",
+	}
+
+	b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	listen.WriteTo(b, addr)
 }
