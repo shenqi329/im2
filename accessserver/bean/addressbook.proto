@@ -1,8 +1,0 @@
-syntax = "proto3";
-package bean;
-
-message Person {
-   int32 id = 1;          //24
-   string name = 2;       //wujingchao
-   string email = 3;      //wujingchao92@gmail.com
-}

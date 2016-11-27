@@ -1,9 +1,9 @@
 package server
 
 import (
-	proto "github.com/golang/protobuf/proto"
-	bean "im/accessserver/bean"
-	"im/accessserver/coder"
+	"github.com/golang/protobuf/proto"
+	bean "im/protocal/bean"
+	coder "im/protocal/coder"
 	"log"
 	"net"
 	"os"
@@ -17,6 +17,39 @@ func ServerAddr() string {
 	//return "192.168.0.107:6000"
 	//return "172.17.0.2:6000"
 	return "localhost:6000"
+}
+
+func ServerUDPAddr() string {
+	return "localhost:6002"
+}
+
+func ListenUDPOnPort() {
+
+	addr, err := net.ResolveUDPAddr("udp", ServerUDPAddr())
+
+	if err != nil {
+		log.Println("net.ResolveUDPAddr fail.", err)
+		os.Exit(1)
+	}
+
+	listen, err := net.ListenUDP("udp", addr)
+	defer listen.Close()
+
+	if err != nil {
+		log.Println("net.ListenUDP fail.", err)
+		os.Exit(1)
+	}
+
+	buffer := make([]byte, 2048)
+	for true {
+
+		count, udpAddr, err := listen.ReadFromUDP(buffer)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		count = count
+		udpAddr = udpAddr
+	}
 }
 
 func ListenOnPort() {

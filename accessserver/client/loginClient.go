@@ -1,9 +1,9 @@
 package main
 
 import (
-	"im/accessserver/bean"
 	"im/accessserver/coder"
 	"im/accessserver/server"
+	bean "im/protocal/bean"
 	"log"
 	"net"
 	"os"

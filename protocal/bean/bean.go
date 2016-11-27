@@ -7,10 +7,10 @@ import (
 type MessageType int32
 
 const (
-	MessageTypeDeviceRegisteRequest  = 1
-	MessageTypeDeviceRegisteResponse = 2
-	MessageTypeDeviceLoginRequest    = 3
-	MessageTypeDeviceLoginResponse   = 4
+	MessageTypeDeviceRegisteRequest  = 11
+	MessageTypeDeviceRegisteResponse = 12
+	MessageTypeDeviceLoginRequest    = 13
+	MessageTypeDeviceLoginResponse   = 14
 )
 
 var kinds = map[MessageType]func() proto.Message{

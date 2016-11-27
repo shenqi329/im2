@@ -1,8 +1,13 @@
 syntax = "proto3";
 package bean;
 
-
 //messageType = 1
+message WraperMessage{
+	int64 rid = 1;
+	bytes message = 2;
+}
+
+//messageType = 11
 message DeviceRegisteRequest{
 	int64 rid = 1;	//流水号
 	string ssoToken = 11;	//统一登陆系统登陆token
@@ -11,24 +16,24 @@ message DeviceRegisteRequest{
 	string platform = 14;	//平台
 }
 
-//messageType = 2
+//messageType = 12
 message DeviceRegisteResponse{
 	int64 rid = 1;	//流水号
 	string code = 2;	//回应的响应码
 	string desc = 3;	//回应码的描述
-	string token = 11;	//注册后的凭证
+ 	string token = 11;	//注册后的凭证
 }
 
-//messageType = 3
+//messageType = 13
 message DeviceLoginRequest {
 	int64 rid = 1;			//流水号
 	string token = 11;		//im系统的token
-   	string appId = 12;      //分配个应用的id
+    string appId = 12;      //分配个应用的id
    	string deviceId = 13;   //设备的id
    	string platform = 14;	//
 }
 
-//messageType = 4
+//messageType = 14
 message DeviceLoginResponse {
 	int64 rid = 1;		//流水号
 	string code = 2;	//回应的响应码
