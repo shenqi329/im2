@@ -15,7 +15,8 @@ var linkCount int = 0
 
 func ListenOnPort() {
 
-	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:6000")
+	//addr, err := net.ResolveTCPAddr("tcp", "172.17.0.2:6000")
+	addr, err := net.ResolveTCPAddr("tcp", coder.Addr())
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)

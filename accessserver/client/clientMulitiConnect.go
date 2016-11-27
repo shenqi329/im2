@@ -1,6 +1,7 @@
 package client
 
 import (
+	"im/accessserver/coder"
 	"log"
 	"net"
 	"time"
@@ -10,8 +11,8 @@ func ClientMulitiConnect() {
 
 	var count int = 100000
 	for i := 0; i < count; i++ {
-		raddr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:6000")
-
+		//raddr, err := net.ResolveTCPAddr("tcp", "172.17.0.2:6000")
+		raddr, err := net.ResolveTCPAddr("tcp", coder.Addr())
 		if err != nil {
 			log.Println("net.ResolveTCPAddr fail.", err)
 			//os.Exit(1)
@@ -39,7 +40,7 @@ func mulitihandleConnection(conn *net.TCPConn) {
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
 
-	b := make([]byte, 1024)
+	b := make([]byte, 1)
 
 	conn.Read(b)
 

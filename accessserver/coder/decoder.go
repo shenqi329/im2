@@ -24,6 +24,11 @@ func NEWDecoder() *Decoder {
 	return decoder
 }
 
+func Addr() string {
+	//return "192.168.0.107:6000"
+	return "172.17.0.2:6000"
+}
+
 func (d *Decoder) Reset() {
 	d.buffer = make([]byte, 0)
 	d.messageType = nil

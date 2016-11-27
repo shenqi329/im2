@@ -1,1 +1,4 @@
 *.exe
+accessserver/clienttest
+accessserver/servertest
+*.out
