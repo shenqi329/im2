@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/golang/protobuf/proto"
+	accessserver "im/accessserver/server"
 	"im/protocal/bean"
 	"im/protocal/coder"
 	"log"
@@ -91,15 +92,16 @@ func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean
 		Token: "a token from proxyserver",
 	}
 
-	b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
-	listen.WriteTo(b, addr)
+	listen.WriteTo(buffer, addr)
+	backToServer(buffer, addr)
 }
 
-func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest) {
+func handleLoginRequest(listen *net.UDPConn, raddr *net.UDPAddr, request *bean.DeviceLoginRequest) {
 
 	response := &bean.DeviceLoginResponse{
 		Rid:  request.Rid,
@@ -107,10 +109,15 @@ func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.De
 		Desc: "success",
 	}
 
-	b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
-	listen.WriteTo(b, addr)
+	listen.WriteTo(buffer, addr)
+	backToServer(buffer, raddr)
+}
+
+func backToServer(buffer []byte, raddr *net.UDPAddr) {
+	//net.DialUDP("udp", nil, raddr)
 }

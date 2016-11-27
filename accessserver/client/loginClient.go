@@ -43,7 +43,7 @@ func connectToPort() {
 	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1; i++ {
 		{
 			registerRequest := &bean.DeviceRegisteRequest{
 				Rid:      getRid(),

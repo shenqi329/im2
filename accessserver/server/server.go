@@ -4,7 +4,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	bean "im/protocal/bean"
 	coder "im/protocal/coder"
-	proxyServer "im/proxyserver/server"
+	//proxyServer "im/proxyserver/server"
 	"log"
 	"net"
 	"os"
@@ -12,7 +12,14 @@ import (
 	"time"
 )
 
+type Request struct {
+	isCancel bool
+	reqPkg   []byte
+	rspChan  chan<- []byte
+}
+
 var linkCount int = 0
+var mutex sync.Mutex
 
 func ServerAddr() string {
 	//return "192.168.0.107:6000"
@@ -142,6 +149,9 @@ func ListenOnPort() {
 		os.Exit(1)
 	}
 
+	reqChan := make(chan *Request, 1000)
+	go connectUdpHandler(reqChan)
+
 	go ListenUDPOnPort()
 
 	log.Println("net.ListenTCP", addr)
@@ -152,13 +162,77 @@ func ListenOnPort() {
 			log.Println("accept tcp fail", err.Error())
 			continue
 		}
-		go handleConnection(conn)
+		go handleTcpConnection(conn, reqChan)
 	}
 }
 
-var mutex sync.Mutex
+func connectUdpHandler(reqChan <-chan *Request) {
+	addr, err := net.ResolveUDPAddr("udp", "localhost:6001")
 
-func handleConnection(conn *net.TCPConn) {
+	if err != nil {
+		log.Println("net.ResolveUDPAddr fail.", err)
+		os.Exit(1)
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		log.Println("net.DialUDP fail.", err)
+		os.Exit(1)
+	}
+	defer conn.Close()
+
+	sendChan := make(chan []byte, 1000)
+	go sendHandler(conn, sendChan)
+
+	recvChan := make(chan []byte, 1000)
+	go recvHandler(conn, recvChan)
+
+	//reqMap := make(map[int]*Request)
+
+	for {
+		select {
+		case req := <-reqChan:
+			sendChan <- req.reqPkg
+
+		case rsp := <-recvChan:
+			decoder := coder.NEWDecoder()
+			messages, err := decoder.Decode(rsp)
+			if err != nil {
+				log.Println(err.Error())
+				conn.Close()
+				return
+			}
+			for _, message := range messages {
+				protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
+				log.Println(proto.CompactTextString(protoMessage))
+			}
+		}
+	}
+}
+
+func sendHandler(conn *net.UDPConn, sendChan <-chan []byte) {
+	for data := range sendChan {
+		wlen, err := conn.Write(data)
+		if err != nil || wlen != len(data) {
+			log.Println("conn.Write fail.", err)
+			continue
+		}
+	}
+}
+
+func recvHandler(conn *net.UDPConn, recvChan chan<- []byte) {
+	for {
+		buf := make([]byte, 4096)
+		rlen, err := conn.Read(buf)
+		if err != nil || rlen <= 0 {
+			log.Println(err)
+			continue
+		}
+		recvChan <- buf[:rlen]
+	}
+}
+
+func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
@@ -191,12 +265,12 @@ func handleConnection(conn *net.TCPConn) {
 			break
 		}
 		for _, message := range messages {
-			handleMessage(conn, message)
+			handleMessage(conn, message, reqChan)
 		}
 	}
 }
 
-func handleMessage(conn *net.TCPConn, message *coder.Message) {
+func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
 	protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
 
@@ -214,48 +288,62 @@ func handleMessage(conn *net.TCPConn, message *coder.Message) {
 	}
 	log.Println(proto.CompactTextString(protoMessage))
 	//只检查消息的合法性,然后将消息转发出去
-	go transformMessage(conn, message)
+	go transformMessage(conn, message, reqChan)
 }
 
-func transformMessage(conn *net.TCPConn, message *coder.Message) {
+func transformMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
-	raddr, err := net.ResolveUDPAddr("udp", proxyServer.ServerUDPAddr())
-
-	if err != nil {
-		log.Println("net.ResolveUDPAddr fail.", err)
-		return
-	}
-
-	socker, err := net.DialUDP("udp", nil, raddr)
-	if err != nil {
-		log.Println("net.DialUDP fail.", err)
-		conn.Close()
-		return
-	}
-	defer socker.Close()
-
-	b, err := coder.EncoderMessage(message.MessageType, message.MessageBuf)
+	resChan := make(chan []byte, 1)
+	buffer, err := coder.EncoderMessage(message.MessageType, message.MessageBuf)
 	if err != nil {
 		log.Println(err)
 		conn.Close()
 	}
-	socker.Write(b)
-
-	//接收数据
-	buffer := make([]byte, 2048)
-	count, _, err := socker.ReadFromUDP(buffer)
-	if err != nil {
-		log.Println(err.Error())
-		conn.Close()
-		return
-	}
-	decoder := coder.NEWDecoder()
-	_, err = decoder.Decode(buffer[0:count])
-	if err != nil {
-		log.Println(err.Error())
-		conn.Close()
-		return
+	reqChan <- &Request{
+		isCancel: false,
+		reqPkg:   buffer,
+		rspChan:  resChan,
 	}
 
-	conn.Write(buffer[0:count])
+	// raddr, err := net.ResolveUDPAddr("udp", proxyServer.ServerUDPAddr())
+
+	// raddr, err := net.ResolveUDPAddr("udp", "localhost:6001")
+
+	// if err != nil {
+	// 	log.Println("net.ResolveUDPAddr fail.", err)
+	// 	return
+	// }
+
+	// socker, err := net.DialUDP("udp", nil, raddr)
+	// if err != nil {
+	// 	log.Println("net.DialUDP fail.", err)
+	// 	conn.Close()
+	// 	return
+	// }
+	// //defer socker.Close()
+
+	// b, err := coder.EncoderMessage(message.MessageType, message.MessageBuf)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	conn.Close()
+	// }
+	// socker.Write(b)
+
+	// //接收数据
+	// buffer := make([]byte, 4096)
+	// count, _, err := socker.ReadFromUDP(buffer)
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	conn.Close()
+	// 	return
+	// }
+	// decoder := coder.NEWDecoder()
+	// _, err = decoder.Decode(buffer[0:count])
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	conn.Close()
+	// 	return
+	// }
+
+	// conn.Write(buffer[0:count])
 }
