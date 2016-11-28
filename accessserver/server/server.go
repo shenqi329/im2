@@ -129,6 +129,7 @@ func connectProxyServer(reqChan <-chan *Request) {
 				}
 				req := reqMap[protoWraperMessage.Rid]
 				req.conn.Write(protoWraperMessage.Message)
+				//delete(reqMap, protoWraperMessage.Rid)
 			}
 		}
 	}
@@ -177,7 +178,7 @@ func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 		conn.Close()
 	}()
 
-	buf := make([]byte, 512)
+	buf := make([]byte, 1024)
 	for true {
 		count, err := conn.Read(buf)
 		if err != nil {
@@ -198,6 +199,9 @@ func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
 	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+
+	request := &bean.DeviceRegisteRequest{}
+	proto.Unmarshal(message.Body, request)
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")

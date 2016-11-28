@@ -16,11 +16,12 @@ func main() {
 	connectToPort()
 }
 
-var rid int64 = 0
+var gRid int64 = 0
 
 func getRid() int64 {
-	rid++
-	return rid
+	gRid++
+	//log.Println(gRid)
+	return gRid
 }
 
 func connectToPort() {
@@ -43,14 +44,14 @@ func connectToPort() {
 	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 100000; i++ {
 		{
 			registerRequest := &bean.DeviceRegisteRequest{
 				Rid:      getRid(),
 				SsoToken: "11111111",
-				// AppId:    "89897",
-				// DeviceId: "024b36dc22425556bc01605d438f4d0c",
-				// Platform: "windows",
+				AppId:    "89897",
+				DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				Platform: "windows",
 			}
 			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteRequest, registerRequest)
 			if err != nil {
@@ -58,21 +59,21 @@ func connectToPort() {
 			}
 			connect.Write(buffer)
 		}
-		// {
-		// 	loginRequest := &bean.DeviceLoginRequest{
-		// 		Rid:      getRid(),
-		// 		Token:    "123456dc22425556bc01605d438f4d0c",
-		// 		AppId:    "89897",
-		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
-		// 		Platform: "windows",
-		// 	}
-		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
-		// 	if err != nil {
-		// 		log.Println(err.Error())
-		// 	}
-		// 	connect.Write(buffer)
-		// }
-		//time.Sleep(1 * time.Millisecond)
+		{
+			loginRequest := &bean.DeviceLoginRequest{
+				Rid:      getRid(),
+				Token:    "123456dc22425556bc01605d438f4d0c",
+				AppId:    "89897",
+				DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				Platform: "windows",
+			}
+			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			connect.Write(buffer)
+		}
+		time.Sleep(1 * time.Millisecond)
 	}
 
 	time.Sleep(60 * time.Minute)

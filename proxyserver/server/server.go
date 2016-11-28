@@ -39,12 +39,9 @@ func ListenOnPort() {
 	log.Println("net.ListenUDP", addr)
 	//
 	reqChan := make(chan *Request, 1000)
-	//go connectHandler(reqChan)
-
-	buf := make([]byte, 4096)
 
 	for true {
-
+		buf := make([]byte, 4096)
 		rlen, remote, err := conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Println("读取数据失败!", err.Error())
@@ -113,7 +110,6 @@ func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean
 		Desc:  "success",
 		Token: "a token from proxyserver",
 	}
-
 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
 	if err != nil {
 		log.Println(err)
