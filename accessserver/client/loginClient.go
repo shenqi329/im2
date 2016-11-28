@@ -43,14 +43,14 @@ func connectToPort() {
 	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000000; i++ {
 		{
 			registerRequest := &bean.DeviceRegisteRequest{
 				Rid:      getRid(),
-				SsoToken: "123456dc22425556dd01605d438f4d0c",
-				AppId:    "89897",
-				DeviceId: "024b36dc22425556bc01605d438f4d0c",
-				Platform: "windows",
+				SsoToken: "11111111",
+				// AppId:    "89897",
+				// DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				// Platform: "windows",
 			}
 			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteRequest, registerRequest)
 			if err != nil {
@@ -58,22 +58,21 @@ func connectToPort() {
 			}
 			connect.Write(buffer)
 		}
-		{
-			loginRequest := &bean.DeviceLoginRequest{
-				Rid:      getRid(),
-				Token:    "123456dc22425556bc01605d438f4d0c",
-				AppId:    "89897",
-				DeviceId: "024b36dc22425556bc01605d438f4d0c",
-				Platform: "windows",
-			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
-			if err != nil {
-				log.Println(err.Error())
-			}
-			connect.Write(buffer)
-		}
-		log.Println(i)
-		time.Sleep(1 * time.Millisecond)
+		// {
+		// 	loginRequest := &bean.DeviceLoginRequest{
+		// 		Rid:      getRid(),
+		// 		Token:    "123456dc22425556bc01605d438f4d0c",
+		// 		AppId:    "89897",
+		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
+		// 		Platform: "windows",
+		// 	}
+		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+		// 	if err != nil {
+		// 		log.Println(err.Error())
+		// 	}
+		// 	connect.Write(buffer)
+		// }
+		//time.Sleep(1 * time.Millisecond)
 	}
 
 	time.Sleep(60 * time.Minute)
@@ -103,7 +102,7 @@ func handleConnection(conn *net.TCPConn) {
 
 func handleMessage(conn *net.TCPConn, message *coder.Message) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
+	protoMessage := bean.Factory((bean.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")
@@ -111,7 +110,7 @@ func handleMessage(conn *net.TCPConn, message *coder.Message) {
 		return
 	}
 
-	if err := proto.Unmarshal(message.MessageBuf, protoMessage); err != nil {
+	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
 		log.Println("消息格式错误")
 		conn.Close()

@@ -16,6 +16,8 @@ type Request struct {
 	isCancel bool
 	reqPkg   []byte
 	rspChan  chan<- []byte
+	rid      int64
+	conn     *net.TCPConn
 }
 
 var linkCount int = 0
@@ -31,110 +33,23 @@ func ServerUDPAddr() string {
 	return "localhost:6002"
 }
 
-func ListenUDPOnPort() {
-
-	addr, err := net.ResolveUDPAddr("udp", ServerUDPAddr())
-
-	if err != nil {
-		log.Println("net.ResolveUDPAddr fail.", err)
-		os.Exit(1)
-	}
-
-	listen, err := net.ListenUDP("udp", addr)
-	defer listen.Close()
-
-	if err != nil {
-		log.Println("net.ListenUDP fail.", err)
-		os.Exit(1)
-	}
-
-	buffer := make([]byte, 4096)
-	decoder := coder.NEWDecoder()
-	for true {
-		decoder.Reset()
-
-		count, udpAddr, err := listen.ReadFromUDP(buffer)
-		if err != nil {
-			log.Println("读取数据失败!", err.Error())
-			continue
-		}
-
-		messages, err := decoder.Decode(buffer[0:count])
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		//处理
-		for _, message := range messages {
-			go handleUDPMessage(listen, udpAddr, message)
-		}
-	}
+func Start() {
+	//go ListenUDPOnPort(ServerUDPAddr())
+	ListenOnTcpPort(ServerAddr())
 }
 
-func handleUDPMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Message) {
-	protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
+var gRid int64 = 0
 
-	if protoMessage == nil {
-		log.Println("未识别的消息")
-		return
-	}
-
-	if err := proto.Unmarshal(message.MessageBuf, protoMessage); err != nil {
-		log.Println(err.Error())
-		log.Println("消息格式错误")
-		return
-	}
-
-	log.Println(proto.CompactTextString(protoMessage))
-
-	switch message.MessageType {
-	case bean.MessageTypeDeviceRegisteResponse:
-		{
-			handleRegisterResponse(listen, addr, protoMessage.(*bean.DeviceRegisteResponse))
-		}
-	case bean.MessageTypeDeviceLoginRequest:
-		{
-			handleLoginResponse(listen, addr, protoMessage.(*bean.DeviceLoginResponse))
-		}
-	}
+func createRID() int64 {
+	mutex.Lock()
+	gRid++
+	mutex.Unlock()
+	return gRid
 }
 
-func handleRegisterResponse(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteResponse) {
+func ListenOnTcpPort(laddr string) {
 
-	// response := &bean.DeviceRegisteResponse{
-	// 	Rid:   request.Rid,
-	// 	Code:  "00000001",
-	// 	Desc:  "success",
-	// 	Token: "a token from proxyserver",
-	// }
-
-	// b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	return
-	// }
-	// listen.WriteTo(b, addr)
-}
-
-func handleLoginResponse(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginResponse) {
-	// response := &bean.DeviceLoginResponse{
-	// 	Rid:  request.Rid,
-	// 	Code: "00000001",
-	// 	Desc: "success",
-	// }
-
-	// b, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	return
-	// }
-	// listen.WriteTo(b, addr)
-}
-
-func ListenOnPort() {
-
-	//addr, err := net.ResolveTCPAddr("tcp", "172.17.0.2:6000")
-	addr, err := net.ResolveTCPAddr("tcp", ServerAddr())
+	addr, err := net.ResolveTCPAddr("tcp", laddr)
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
@@ -148,14 +63,13 @@ func ListenOnPort() {
 		log.Println("net.ListenTCP fail.", err)
 		os.Exit(1)
 	}
-
-	reqChan := make(chan *Request, 1000)
-	go connectUdpHandler(reqChan)
-
-	go ListenUDPOnPort()
-
 	log.Println("net.ListenTCP", addr)
 
+	//
+	reqChan := make(chan *Request, 1000)
+	go connectProxyServer(reqChan)
+
+	//
 	for {
 		conn, err := listen.AcceptTCP()
 		if err != nil {
@@ -166,7 +80,7 @@ func ListenOnPort() {
 	}
 }
 
-func connectUdpHandler(reqChan <-chan *Request) {
+func connectProxyServer(reqChan <-chan *Request) {
 	addr, err := net.ResolveUDPAddr("udp", "localhost:6001")
 
 	if err != nil {
@@ -179,6 +93,7 @@ func connectUdpHandler(reqChan <-chan *Request) {
 		log.Println("net.DialUDP fail.", err)
 		os.Exit(1)
 	}
+	log.Println("net.DialUDP", addr)
 	defer conn.Close()
 
 	sendChan := make(chan []byte, 1000)
@@ -187,24 +102,33 @@ func connectUdpHandler(reqChan <-chan *Request) {
 	recvChan := make(chan []byte, 1000)
 	go recvHandler(conn, recvChan)
 
-	//reqMap := make(map[int]*Request)
-
+	reqMap := make(map[int64]*Request)
 	for {
 		select {
 		case req := <-reqChan:
+			//log.Println("收到转发请求")
 			sendChan <- req.reqPkg
+			reqMap[req.rid] = req
 
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()
-			messages, err := decoder.Decode(rsp)
+			beanWraperMessages, err := decoder.Decode(rsp)
 			if err != nil {
 				log.Println(err.Error())
-				conn.Close()
 				return
 			}
-			for _, message := range messages {
-				protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
-				log.Println(proto.CompactTextString(protoMessage))
+			for _, beanWraperMessage := range beanWraperMessages {
+				if beanWraperMessage.Type != bean.MessageTypeWraper {
+					continue
+				}
+				protoWraperMessage := &bean.WraperMessage{}
+				err := proto.Unmarshal(beanWraperMessage.Body, protoWraperMessage)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				req := reqMap[protoWraperMessage.Rid]
+				req.conn.Write(protoWraperMessage.Message)
 			}
 		}
 	}
@@ -212,6 +136,7 @@ func connectUdpHandler(reqChan <-chan *Request) {
 
 func sendHandler(conn *net.UDPConn, sendChan <-chan []byte) {
 	for data := range sendChan {
+		//log.Println("处理转发请求")
 		wlen, err := conn.Write(data)
 		if err != nil || wlen != len(data) {
 			log.Println("conn.Write fail.", err)
@@ -265,14 +190,14 @@ func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 			break
 		}
 		for _, message := range messages {
-			handleMessage(conn, message, reqChan)
+			go handleMessage(conn, message, reqChan)
 		}
 	}
 }
 
 func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
+	protoMessage := bean.Factory((bean.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")
@@ -280,70 +205,33 @@ func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Re
 		return
 	}
 
-	if err := proto.Unmarshal(message.MessageBuf, protoMessage); err != nil {
+	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
-		log.Println("消息格式错误")
 		conn.Close()
 		return
 	}
-	log.Println(proto.CompactTextString(protoMessage))
 	//只检查消息的合法性,然后将消息转发出去
-	go transformMessage(conn, message, reqChan)
+	transformMessage(conn, message, reqChan)
 }
 
 func transformMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
 	resChan := make(chan []byte, 1)
-	buffer, err := coder.EncoderMessage(message.MessageType, message.MessageBuf)
+	//发送打包后的数据,数据中包含流水号
+	rid := createRID()
+	wraperMessage := &bean.WraperMessage{
+		Rid:     rid,
+		Message: message.Encode(),
+	}
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
 	if err != nil {
 		log.Println(err)
-		conn.Close()
 	}
 	reqChan <- &Request{
 		isCancel: false,
 		reqPkg:   buffer,
 		rspChan:  resChan,
+		rid:      rid,
+		conn:     conn,
 	}
-
-	// raddr, err := net.ResolveUDPAddr("udp", proxyServer.ServerUDPAddr())
-
-	// raddr, err := net.ResolveUDPAddr("udp", "localhost:6001")
-
-	// if err != nil {
-	// 	log.Println("net.ResolveUDPAddr fail.", err)
-	// 	return
-	// }
-
-	// socker, err := net.DialUDP("udp", nil, raddr)
-	// if err != nil {
-	// 	log.Println("net.DialUDP fail.", err)
-	// 	conn.Close()
-	// 	return
-	// }
-	// //defer socker.Close()
-
-	// b, err := coder.EncoderMessage(message.MessageType, message.MessageBuf)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	conn.Close()
-	// }
-	// socker.Write(b)
-
-	// //接收数据
-	// buffer := make([]byte, 4096)
-	// count, _, err := socker.ReadFromUDP(buffer)
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	conn.Close()
-	// 	return
-	// }
-	// decoder := coder.NEWDecoder()
-	// _, err = decoder.Decode(buffer[0:count])
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	conn.Close()
-	// 	return
-	// }
-
-	// conn.Write(buffer[0:count])
 }

@@ -6,6 +6,12 @@ import (
 
 type MessageType int32
 
+//系统保留类型 1-10
+const (
+	MessageTypeWraper = 1
+)
+
+//使用类型 11-
 const (
 	MessageTypeDeviceRegisteRequest  = 11
 	MessageTypeDeviceRegisteResponse = 12
@@ -14,7 +20,7 @@ const (
 )
 
 var kinds = map[MessageType]func() proto.Message{
-
+	MessageTypeWraper:                func() proto.Message { return &WraperMessage{} },
 	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
 	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },
 	MessageTypeDeviceLoginRequest:    func() proto.Message { return &DeviceLoginRequest{} },

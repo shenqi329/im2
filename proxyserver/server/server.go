@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/golang/protobuf/proto"
-	accessserver "im/accessserver/server"
 	"im/protocal/bean"
 	"im/protocal/coder"
 	"log"
@@ -14,7 +13,15 @@ func ServerUDPAddr() string {
 	return "localhost:6001"
 }
 
+type Request struct {
+	isCancel bool
+	reqPkg   []byte
+	rspChan  chan<- []byte
+}
+
 func ListenOnPort() {
+
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	addr, err := net.ResolveUDPAddr("udp", ServerUDPAddr())
 
 	if err != nil {
@@ -22,68 +29,83 @@ func ListenOnPort() {
 		os.Exit(1)
 	}
 
-	listen, err := net.ListenUDP("udp", addr)
-	defer listen.Close()
+	conn, err := net.ListenUDP("udp", addr)
+	defer conn.Close()
 
 	if err != nil {
 		log.Println("net.ListenUDP fail.", err)
 		os.Exit(1)
 	}
+	log.Println("net.ListenUDP", addr)
+	//
+	reqChan := make(chan *Request, 1000)
+	//go connectHandler(reqChan)
 
-	buffer := make([]byte, 4096)
-
-	decoder := coder.NEWDecoder()
+	buf := make([]byte, 4096)
 
 	for true {
-		decoder.Reset()
 
-		count, udpAddr, err := listen.ReadFromUDP(buffer)
+		rlen, remote, err := conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Println("读取数据失败!", err.Error())
 			continue
 		}
+		go processHandler(conn, remote, buf[:rlen], reqChan)
+	}
+}
 
-		messages, err := decoder.Decode(buffer[0:count])
+func processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte, reqChan chan<- *Request) {
+
+	decoder := coder.NEWDecoder()
+	beanWraperMessages, err := decoder.Decode(msg)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	//处理
+	for _, beanWraperMessage := range beanWraperMessages {
+		if beanWraperMessage.Type != bean.MessageTypeWraper {
+			continue
+		}
+
+		wraperMessage := &bean.WraperMessage{}
+		if err := proto.Unmarshal(beanWraperMessage.Body, wraperMessage); err != nil {
+			log.Println(err)
+			continue
+		}
+
+		decoder.Reset()
+		beanMessages, err := decoder.Decode(wraperMessage.Message)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		//处理
-		for _, message := range messages {
-			go handleMessage(listen, udpAddr, message)
+		for _, beanMessage := range beanMessages {
+			handleMessage(conn, remote, beanMessage, reqChan, wraperMessage.Rid)
 		}
 	}
 }
 
-func handleMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Message) {
-	protoMessage := bean.Factory((bean.MessageType)(message.MessageType))
+func handleMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Message, reqChan chan<- *Request, rid int64) {
 
-	if protoMessage == nil {
-		log.Println("未识别的消息")
-		return
-	}
-
-	if err := proto.Unmarshal(message.MessageBuf, protoMessage); err != nil {
+	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
-		log.Println("消息格式错误")
 		return
 	}
-
-	log.Println(proto.CompactTextString(protoMessage))
-
-	switch message.MessageType {
+	switch message.Type {
 	case bean.MessageTypeDeviceRegisteRequest:
 		{
-			handleRegisterRequest(listen, addr, protoMessage.(*bean.DeviceRegisteRequest))
+			handleRegisterRequest(listen, addr, protoMessage.(*bean.DeviceRegisteRequest), reqChan, rid)
 		}
 	case bean.MessageTypeDeviceLoginRequest:
 		{
-			handleLoginRequest(listen, addr, protoMessage.(*bean.DeviceLoginRequest))
+			handleLoginRequest(listen, addr, protoMessage.(*bean.DeviceLoginRequest), reqChan, rid)
 		}
 	}
 }
 
-func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest) {
+func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest, reqChan chan<- *Request, rid int64) {
 
 	response := &bean.DeviceRegisteResponse{
 		Rid:   request.Rid,
@@ -92,16 +114,28 @@ func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean
 		Token: "a token from proxyserver",
 	}
 
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(err)
+		return
+	}
+	sendBack(listen, addr, reqChan, rid, buffer)
+}
+
+func sendBack(listen *net.UDPConn, addr *net.UDPAddr, reqChan chan<- *Request, rid int64, buffer []byte) {
+	wraperMessage := &bean.WraperMessage{
+		Rid:     rid,
+		Message: buffer,
+	}
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
+	if err != nil {
+		log.Println(err)
 		return
 	}
 	listen.WriteTo(buffer, addr)
-	backToServer(buffer, addr)
 }
 
-func handleLoginRequest(listen *net.UDPConn, raddr *net.UDPAddr, request *bean.DeviceLoginRequest) {
+func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest, reqChan chan<- *Request, rid int64) {
 
 	response := &bean.DeviceLoginResponse{
 		Rid:  request.Rid,
@@ -111,13 +145,8 @@ func handleLoginRequest(listen *net.UDPConn, raddr *net.UDPAddr, request *bean.D
 
 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(err)
 		return
 	}
-	listen.WriteTo(buffer, addr)
-	backToServer(buffer, raddr)
-}
-
-func backToServer(buffer []byte, raddr *net.UDPAddr) {
-	//net.DialUDP("udp", nil, raddr)
+	sendBack(listen, addr, reqChan, rid, buffer)
 }

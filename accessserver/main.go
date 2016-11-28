@@ -7,5 +7,5 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
-	server.ListenOnPort()
+	server.Start()
 }

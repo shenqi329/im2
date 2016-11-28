@@ -25,15 +25,6 @@ func EncoderProtoMessage(messageType int, message proto.Message) ([]byte, error)
 	}
 
 	return EncoderMessage(messageType, b)
-	// length := len(b)
-
-	// messageByte := encodeTypeToByte(messageType)
-	// lengthByte := encodeLengthToByte(length)
-
-	// messageByte = append(messageByte, lengthByte...)
-	// messageByte = append(messageByte, b...)
-
-	// return messageByte, nil
 }
 
 func encodeLengthToByte(length int) []byte {
