@@ -4,11 +4,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	bean "im/protocal/bean"
 	coder "im/protocal/coder"
-	//proxyServer "im/proxyserver/server"
 	"log"
 	"net"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -16,40 +16,43 @@ type Request struct {
 	isCancel bool
 	reqPkg   []byte
 	rspChan  chan<- []byte
-	rid      int64
+	rid      uint64
 	conn     *net.TCPConn
 }
 
-var linkCount int = 0
-var mutex sync.Mutex
+type Server struct {
+	rid       uint64 //请求流水号
+	ridMutex  sync.Mutex
+	linkCount int32
 
-func ServerAddr() string {
-	//return "192.168.0.107:6000"
-	//return "172.17.0.2:6000"
-	return "localhost:6000"
+	localTcpAddr string
+	proxyUdpAddr string
 }
 
-func ServerUDPAddr() string {
-	return "localhost:6002"
+func (s *Server) createRID() uint64 {
+	s.ridMutex.Lock()
+	s.rid++
+	s.ridMutex.Unlock()
+	return s.rid
 }
 
-func Start() {
-	//go ListenUDPOnPort(ServerUDPAddr())
-	ListenOnTcpPort(ServerAddr())
+func NEWServer(localTcpAddr string, proxyUdpAddr string) (s *Server) {
+
+	return &Server{
+		localTcpAddr: localTcpAddr,
+		proxyUdpAddr: proxyUdpAddr,
+	}
 }
 
-var gRid int64 = 0
+func (s *Server) Run() {
 
-func createRID() int64 {
-	mutex.Lock()
-	gRid++
-	mutex.Unlock()
-	return gRid
+	s.ListenOnTcpPort(s.localTcpAddr)
+
 }
 
-func ListenOnTcpPort(laddr string) {
+func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 
-	addr, err := net.ResolveTCPAddr("tcp", laddr)
+	addr, err := net.ResolveTCPAddr("tcp", localTcpAddr)
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
@@ -67,7 +70,7 @@ func ListenOnTcpPort(laddr string) {
 
 	//
 	reqChan := make(chan *Request, 1000)
-	go connectProxyServer(reqChan)
+	go s.connectProxyServer(reqChan)
 
 	//
 	for {
@@ -76,12 +79,12 @@ func ListenOnTcpPort(laddr string) {
 			log.Println("accept tcp fail", err.Error())
 			continue
 		}
-		go handleTcpConnection(conn, reqChan)
+		go s.handleTcpConnection(conn, reqChan)
 	}
 }
 
-func connectProxyServer(reqChan <-chan *Request) {
-	addr, err := net.ResolveUDPAddr("udp", "localhost:6001")
+func (s *Server) connectProxyServer(reqChan <-chan *Request) {
+	addr, err := net.ResolveUDPAddr("udp", s.proxyUdpAddr)
 
 	if err != nil {
 		log.Println("net.ResolveUDPAddr fail.", err)
@@ -97,12 +100,12 @@ func connectProxyServer(reqChan <-chan *Request) {
 	defer conn.Close()
 
 	sendChan := make(chan []byte, 1000)
-	go sendHandler(conn, sendChan)
+	go s.sendHandler(conn, sendChan)
 
 	recvChan := make(chan []byte, 1000)
-	go recvHandler(conn, recvChan)
+	go s.recvHandler(conn, recvChan)
 
-	reqMap := make(map[int64]*Request)
+	reqMap := make(map[uint64]*Request)
 	for {
 		select {
 		case req := <-reqChan:
@@ -128,14 +131,16 @@ func connectProxyServer(reqChan <-chan *Request) {
 					continue
 				}
 				req := reqMap[protoWraperMessage.Rid]
-				req.conn.Write(protoWraperMessage.Message)
-				//delete(reqMap, protoWraperMessage.Rid)
+				if req != nil {
+					delete(reqMap, protoWraperMessage.Rid)
+					req.conn.Write(protoWraperMessage.Message)
+				}
 			}
 		}
 	}
 }
 
-func sendHandler(conn *net.UDPConn, sendChan <-chan []byte) {
+func (s *Server) sendHandler(conn *net.UDPConn, sendChan <-chan []byte) {
 	for data := range sendChan {
 		//log.Println("处理转发请求")
 		wlen, err := conn.Write(data)
@@ -146,7 +151,7 @@ func sendHandler(conn *net.UDPConn, sendChan <-chan []byte) {
 	}
 }
 
-func recvHandler(conn *net.UDPConn, recvChan chan<- []byte) {
+func (s *Server) recvHandler(conn *net.UDPConn, recvChan chan<- []byte) {
 	for {
 		buf := make([]byte, 4096)
 		rlen, err := conn.Read(buf)
@@ -158,23 +163,19 @@ func recvHandler(conn *net.UDPConn, recvChan chan<- []byte) {
 	}
 }
 
-func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
+func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
 
 	decoder := coder.NEWDecoder()
 
-	mutex.Lock()
-	linkCount++
-	log.Println("linkCount=", linkCount)
-	mutex.Unlock()
+	atomic.AddInt32(&s.linkCount, 1)
+	log.Println("linkCount=", s.linkCount)
 
 	defer func() {
-		mutex.Lock()
-		linkCount--
-		log.Println("linkCount=", linkCount)
-		mutex.Unlock()
+		atomic.AddInt32(&s.linkCount, -1)
+		log.Println("linkCount=", s.linkCount)
 		conn.Close()
 	}()
 
@@ -191,12 +192,12 @@ func handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
 			break
 		}
 		for _, message := range messages {
-			go handleMessage(conn, message, reqChan)
+			go s.handleMessage(conn, message, reqChan)
 		}
 	}
 }
 
-func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
 	protoMessage := bean.Factory((bean.MessageType)(message.Type))
 
@@ -214,15 +215,16 @@ func handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Re
 		conn.Close()
 		return
 	}
+
 	//只检查消息的合法性,然后将消息转发出去
-	transformMessage(conn, message, reqChan)
+	s.transformMessage(conn, message, reqChan)
 }
 
-func transformMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) transformMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
 
 	resChan := make(chan []byte, 1)
 	//发送打包后的数据,数据中包含流水号
-	rid := createRID()
+	rid := s.createRID()
 	wraperMessage := &bean.WraperMessage{
 		Rid:     rid,
 		Message: message.Encode(),

@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	"im/accessserver/server"
 	"im/protocal/bean"
 	"im/protocal/coder"
 	"log"
@@ -16,9 +15,9 @@ func main() {
 	connectToPort()
 }
 
-var gRid int64 = 0
+var gRid uint64 = 0
 
-func getRid() int64 {
+func getRid() uint64 {
 	gRid++
 	//log.Println(gRid)
 	return gRid
@@ -26,8 +25,7 @@ func getRid() int64 {
 
 func connectToPort() {
 
-	//raddr, err := net.ResolveTCPAddr("tcp", "172.17.0.2:6000")
-	raddr, err := net.ResolveTCPAddr("tcp", server.ServerAddr())
+	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)

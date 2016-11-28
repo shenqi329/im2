@@ -9,20 +9,29 @@ import (
 	"os"
 )
 
-func ServerUDPAddr() string {
-	return "localhost:6001"
-}
-
 type Request struct {
 	isCancel bool
 	reqPkg   []byte
 	rspChan  chan<- []byte
 }
 
-func ListenOnPort() {
+type Server struct {
+	localUdpAddr string
+}
 
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
-	addr, err := net.ResolveUDPAddr("udp", ServerUDPAddr())
+func NEWServer(localUdpAddr string) *Server {
+	return &Server{
+		localUdpAddr: localUdpAddr,
+	}
+}
+
+func (s *Server) Run() {
+	s.listenOnUdpPort(s.localUdpAddr)
+}
+
+func (s *Server) listenOnUdpPort(localUdpAddr string) {
+
+	addr, err := net.ResolveUDPAddr("udp", localUdpAddr)
 
 	if err != nil {
 		log.Println("net.ResolveUDPAddr fail.", err)
@@ -39,7 +48,6 @@ func ListenOnPort() {
 	log.Println("net.ListenUDP", addr)
 	//
 	reqChan := make(chan *Request, 1000)
-
 	for true {
 		buf := make([]byte, 4096)
 		rlen, remote, err := conn.ReadFromUDP(buf)
@@ -47,11 +55,11 @@ func ListenOnPort() {
 			log.Println("读取数据失败!", err.Error())
 			continue
 		}
-		go processHandler(conn, remote, buf[:rlen], reqChan)
+		go s.processHandler(conn, remote, buf[:rlen], reqChan)
 	}
 }
 
-func processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte, reqChan chan<- *Request) {
+func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte, reqChan chan<- *Request) {
 
 	decoder := coder.NEWDecoder()
 	beanWraperMessages, err := decoder.Decode(msg)
@@ -78,12 +86,12 @@ func processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte, reqChan 
 			continue
 		}
 		for _, beanMessage := range beanMessages {
-			handleMessage(conn, remote, beanMessage, reqChan, wraperMessage.Rid)
+			s.handleMessage(conn, remote, beanMessage, reqChan, wraperMessage.Rid)
 		}
 	}
 }
 
-func handleMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Message, reqChan chan<- *Request, rid int64) {
+func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, reqChan chan<- *Request, rid uint64) {
 
 	protoMessage := bean.Factory((bean.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
@@ -93,16 +101,16 @@ func handleMessage(listen *net.UDPConn, addr *net.UDPAddr, message *coder.Messag
 	switch message.Type {
 	case bean.MessageTypeDeviceRegisteRequest:
 		{
-			handleRegisterRequest(listen, addr, protoMessage.(*bean.DeviceRegisteRequest), reqChan, rid)
+			s.handleRegisterRequest(conn, addr, protoMessage.(*bean.DeviceRegisteRequest), reqChan, rid)
 		}
 	case bean.MessageTypeDeviceLoginRequest:
 		{
-			handleLoginRequest(listen, addr, protoMessage.(*bean.DeviceLoginRequest), reqChan, rid)
+			s.handleLoginRequest(conn, addr, protoMessage.(*bean.DeviceLoginRequest), reqChan, rid)
 		}
 	}
 }
 
-func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest, reqChan chan<- *Request, rid int64) {
+func (s *Server) handleRegisterRequest(conn *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest, reqChan chan<- *Request, rid uint64) {
 
 	response := &bean.DeviceRegisteResponse{
 		Rid:   request.Rid,
@@ -115,23 +123,10 @@ func handleRegisterRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean
 		log.Println(err)
 		return
 	}
-	sendBack(listen, addr, reqChan, rid, buffer)
+	s.wraperMessageAndSendBack(conn, addr, reqChan, rid, buffer)
 }
 
-func sendBack(listen *net.UDPConn, addr *net.UDPAddr, reqChan chan<- *Request, rid int64, buffer []byte) {
-	wraperMessage := &bean.WraperMessage{
-		Rid:     rid,
-		Message: buffer,
-	}
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	listen.WriteTo(buffer, addr)
-}
-
-func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest, reqChan chan<- *Request, rid int64) {
+func (s *Server) handleLoginRequest(conn *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest, reqChan chan<- *Request, rid uint64) {
 
 	response := &bean.DeviceLoginResponse{
 		Rid:  request.Rid,
@@ -144,5 +139,18 @@ func handleLoginRequest(listen *net.UDPConn, addr *net.UDPAddr, request *bean.De
 		log.Println(err)
 		return
 	}
-	sendBack(listen, addr, reqChan, rid, buffer)
+	s.wraperMessageAndSendBack(conn, addr, reqChan, rid, buffer)
+}
+
+func (s *Server) wraperMessageAndSendBack(conn *net.UDPConn, addr *net.UDPAddr, reqChan chan<- *Request, rid uint64, buffer []byte) {
+	wraperMessage := &bean.WraperMessage{
+		Rid:     rid,
+		Message: buffer,
+	}
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	conn.WriteTo(buffer, addr)
 }

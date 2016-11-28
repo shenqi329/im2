@@ -3,13 +3,13 @@ package bean;
 
 //messageType = 1
 message WraperMessage{
-	int64 rid = 1;
+	uint64 rid = 1;
 	bytes message = 2;
 }
 
 //messageType = 11
 message DeviceRegisteRequest{
-	int64 rid = 1;	//流水号
+	uint64 rid = 1;	//流水号
 	string ssoToken = 11;	//统一登陆系统登陆token
 	string appId = 12;		//应用id
 	string deviceId = 13;	//设备id
@@ -18,7 +18,7 @@ message DeviceRegisteRequest{
 
 //messageType = 12
 message DeviceRegisteResponse{
-	int64 rid = 1;	//流水号
+	uint64 rid = 1;	//流水号
 	string code = 2;	//回应的响应码
 	string desc = 3;	//回应码的描述
  	string token = 11;	//注册后的凭证
@@ -26,7 +26,7 @@ message DeviceRegisteResponse{
 
 //messageType = 13
 message DeviceLoginRequest {
-	int64 rid = 1;			//流水号
+	uint64 rid = 1;			//流水号
 	string token = 11;		//im系统的token
     string appId = 12;      //分配个应用的id
    	string deviceId = 13;   //设备的id
@@ -35,7 +35,7 @@ message DeviceLoginRequest {
 
 //messageType = 14
 message DeviceLoginResponse {
-	int64 rid = 1;		//流水号
+	uint64 rid = 1;		//流水号
 	string code = 2;	//回应的响应码
 	string desc = 3;	//回应码的描述
 }
