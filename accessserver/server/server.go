@@ -13,17 +13,16 @@ import (
 )
 
 type Request struct {
-	isCancel bool
-	reqPkg   []byte
-	rspChan  chan<- []byte
-	rid      uint64
-	conn     *net.TCPConn
+	reqPkg []byte
+	connId uint32
+	conn   *net.TCPConn
 }
 
 type Server struct {
 	rid       uint64 //请求流水号
 	ridMutex  sync.Mutex
-	linkCount int32
+	connCount int32
+	connId    uint32 //请求的id
 
 	localTcpAddr string
 	proxyUdpAddr string
@@ -34,6 +33,10 @@ func (s *Server) createRID() uint64 {
 	s.rid++
 	s.ridMutex.Unlock()
 	return s.rid
+}
+
+func (s *Server) createConnId() uint32 {
+	return atomic.AddUint32(&s.connId, 1)
 }
 
 func NEWServer(localTcpAddr string, proxyUdpAddr string) (s *Server) {
@@ -105,14 +108,22 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request) {
 	recvChan := make(chan []byte, 1000)
 	go s.recvHandler(conn, recvChan)
 
-	reqMap := make(map[uint64]*Request)
+	connMap := make(map[uint32]*net.TCPConn)
+
+	var sendCount uint32 = 0
+	var recvCount uint32 = 0
+
 	for {
 		select {
 		case req := <-reqChan:
-			//log.Println("收到转发请求")
-			sendChan <- req.reqPkg
-			reqMap[req.rid] = req
-
+			{
+				if connMap[req.connId] == nil {
+					connMap[req.connId] = req.conn
+				}
+				sendChan <- req.reqPkg
+				sendCount++
+				//log.Println("send:", sendCount)
+			}
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()
 			beanWraperMessages, err := decoder.Decode(rsp)
@@ -130,10 +141,11 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request) {
 					log.Println(err)
 					continue
 				}
-				req := reqMap[protoWraperMessage.Rid]
-				if req != nil {
-					delete(reqMap, protoWraperMessage.Rid)
-					req.conn.Write(protoWraperMessage.Message)
+				tcpConn := connMap[(uint32)(protoWraperMessage.Rid)]
+				if tcpConn != nil {
+					recvCount++
+					//log.Println("recv:", recvCount)
+					tcpConn.Write(protoWraperMessage.Message)
 				}
 			}
 		}
@@ -170,20 +182,21 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request)
 
 	decoder := coder.NEWDecoder()
 
-	atomic.AddInt32(&s.linkCount, 1)
-	log.Println("linkCount=", s.linkCount)
+	atomic.AddInt32(&s.connCount, 1)
+	connId := atomic.AddUint32(&s.connId, 1) //生成连接的id
+	log.Println("connCount=", s.connCount)
 
 	defer func() {
-		atomic.AddInt32(&s.linkCount, -1)
-		log.Println("linkCount=", s.linkCount)
+		atomic.AddInt32(&s.connCount, -1)
+		log.Println("connCount=", s.connCount)
 		conn.Close()
 	}()
 
-	buf := make([]byte, 1024)
 	for true {
+		buf := make([]byte, 1024)
 		count, err := conn.Read(buf)
 		if err != nil {
-			log.Println(err.Error())
+			log.Println(err.Error(), " ", conn)
 			break
 		}
 		messages, err := decoder.Decode(buf[0:count])
@@ -192,52 +205,52 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request)
 			break
 		}
 		for _, message := range messages {
-			go s.handleMessage(conn, message, reqChan)
+			request := &Request{
+				connId: connId,
+				conn:   conn,
+			}
+			s.handleMessage(request, message, reqChan)
 		}
 	}
 }
 
-func (s *Server) handleMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) handleMessage(request *Request, message *coder.Message, reqChan chan<- *Request) {
 
+	//检测数据的合法性
 	protoMessage := bean.Factory((bean.MessageType)(message.Type))
-
-	request := &bean.DeviceRegisteRequest{}
-	proto.Unmarshal(message.Body, request)
-
+	requestBean := &bean.DeviceRegisteRequest{}
+	proto.Unmarshal(message.Body, requestBean)
 	if protoMessage == nil {
 		log.Println("未识别的消息")
-		conn.Close()
+		request.conn.Close()
 		return
 	}
-
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
-		conn.Close()
+		request.conn.Close()
 		return
 	}
 
 	//只检查消息的合法性,然后将消息转发出去
-	s.transformMessage(conn, message, reqChan)
+	s.transformMessage(request, message, reqChan)
 }
 
-func (s *Server) transformMessage(conn *net.TCPConn, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) transformMessage(request *Request, message *coder.Message, reqChan chan<- *Request) {
 
-	resChan := make(chan []byte, 1)
-	//发送打包后的数据,数据中包含流水号
-	rid := s.createRID()
+	//打包并且生成发送的数据包
 	wraperMessage := &bean.WraperMessage{
-		Rid:     rid,
+		Rid:     (uint64)(request.connId),
 		Message: message.Encode(),
 	}
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
+	reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
 	if err != nil {
 		log.Println(err)
 	}
-	reqChan <- &Request{
-		isCancel: false,
-		reqPkg:   buffer,
-		rspChan:  resChan,
-		rid:      rid,
-		conn:     conn,
-	}
+	//将数据发送到通道
+	request.reqPkg = reqPkg
+	reqChan <- request
 }
+
+//
+//
+//

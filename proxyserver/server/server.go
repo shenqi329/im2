@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"im/protocal/bean"
 	"im/protocal/coder"
@@ -45,16 +46,23 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 		log.Println("net.ListenUDP fail.", err)
 		os.Exit(1)
 	}
+
+	conn.SetReadBuffer(1024 * 1024 * 100)
+	conn.SetWriteBuffer(1024 * 1024 * 100)
 	log.Println("net.ListenUDP", addr)
 	//
 	reqChan := make(chan *Request, 1000)
+	var recvAndSendCount uint32 = 0
+
 	for true {
-		buf := make([]byte, 4096)
+		buf := make([]byte, 1024)
 		rlen, remote, err := conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Println("读取数据失败!", err.Error())
 			continue
 		}
+		recvAndSendCount++
+		//log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
 		go s.processHandler(conn, remote, buf[:rlen], reqChan)
 	}
 }
@@ -116,9 +124,9 @@ func (s *Server) handleRegisterRequest(conn *net.UDPConn, addr *net.UDPAddr, req
 		Rid:   request.Rid,
 		Code:  "00000001",
 		Desc:  "success",
-		Token: "a token from proxyserver",
+		Token: fmt.Sprintf("%d", rid),
 	}
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
+	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
 	if err != nil {
 		log.Println(err)
 		return
@@ -152,5 +160,6 @@ func (s *Server) wraperMessageAndSendBack(conn *net.UDPConn, addr *net.UDPAddr, 
 		log.Println(err)
 		return
 	}
+
 	conn.WriteTo(buffer, addr)
 }

@@ -16,6 +16,7 @@ func main() {
 }
 
 var gRid uint64 = 0
+var gRecvCount uint32 = 0
 
 func getRid() uint64 {
 	gRid++
@@ -42,7 +43,7 @@ func connectToPort() {
 	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10000; i++ {
 		{
 			registerRequest := &bean.DeviceRegisteRequest{
 				Rid:      getRid(),
@@ -56,24 +57,24 @@ func connectToPort() {
 				log.Println(err.Error())
 			}
 			connect.Write(buffer)
+			time.Sleep(1 * time.Millisecond)
 		}
-		{
-			loginRequest := &bean.DeviceLoginRequest{
-				Rid:      getRid(),
-				Token:    "123456dc22425556bc01605d438f4d0c",
-				AppId:    "89897",
-				DeviceId: "024b36dc22425556bc01605d438f4d0c",
-				Platform: "windows",
-			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
-			if err != nil {
-				log.Println(err.Error())
-			}
-			connect.Write(buffer)
-		}
-		time.Sleep(1 * time.Millisecond)
+		// {
+		// 	loginRequest := &bean.DeviceLoginRequest{
+		// 		Rid:      getRid(),
+		// 		Token:    "123456dc22425556bc01605d438f4d0c",
+		// 		AppId:    "89897",
+		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
+		// 		Platform: "windows",
+		// 	}
+		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+		// 	if err != nil {
+		// 		log.Println(err.Error())
+		// 	}
+		// 	connect.Write(buffer)
+		// }
 	}
-
+	log.Println("send success")
 	time.Sleep(60 * time.Minute)
 }
 
@@ -115,6 +116,7 @@ func handleMessage(conn *net.TCPConn, message *coder.Message) {
 		conn.Close()
 		return
 	}
-	log.Println(proto.CompactTextString(protoMessage))
+	gRecvCount++
+	log.Println("recvMsg count = ", gRecvCount, "context:", proto.CompactTextString(protoMessage))
 
 }
