@@ -2,3 +2,12 @@
 accessserver/clienttest
 accessserver/servertest
 *.out
+accessserver/accessserver
+
+accessserver/accessserver
+
+accessserver/client/loginClient
+
+accessserver/client/loginClient
+
+accessserver/accessserver

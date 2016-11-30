@@ -6,13 +6,18 @@ import (
 	"im/protocal/coder"
 	"log"
 	"net"
-	"os"
+	"runtime"
 	"time"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
-	connectToPort()
+
+	for i := 0; i < 1; i++ {
+		go connectToPort()
+		//time.Sleep(20 * time.Millisecond)
+	}
+	time.Sleep(60 * time.Minute)
 }
 
 var gRid uint64 = 0
@@ -26,24 +31,27 @@ func getRid() uint64 {
 
 func connectToPort() {
 
-	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
+	raddr, err := net.ResolveTCPAddr("tcp", "172.17.0.4:6000")
+	if runtime.GOOS == "windows" {
+		raddr, err = net.ResolveTCPAddr("tcp", "localhost:6000")
+	}
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
-		os.Exit(1)
+		return
 	}
 	connect, err := net.DialTCP("tcp", nil, raddr)
 
 	if err != nil {
 		log.Println("net.ListenTCP fail.", err.Error())
-		os.Exit(1)
+		return
 	}
 
 	connect.SetKeepAlive(true)
 	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 1; i++ {
 		{
 			registerRequest := &bean.DeviceRegisteRequest{
 				Rid:      getRid(),
@@ -59,23 +67,22 @@ func connectToPort() {
 			connect.Write(buffer)
 			time.Sleep(1 * time.Millisecond)
 		}
-		// {
-		// 	loginRequest := &bean.DeviceLoginRequest{
-		// 		Rid:      getRid(),
-		// 		Token:    "123456dc22425556bc01605d438f4d0c",
-		// 		AppId:    "89897",
-		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
-		// 		Platform: "windows",
-		// 	}
-		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
-		// 	if err != nil {
-		// 		log.Println(err.Error())
-		// 	}
-		// 	connect.Write(buffer)
-		// }
+		{
+			loginRequest := &bean.DeviceLoginRequest{
+				Rid:      getRid(),
+				Token:    "123456dc22425556bc01605d438f4d0c",
+				AppId:    "89897",
+				DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				Platform: "windows",
+			}
+			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			connect.Write(buffer)
+		}
 	}
-	log.Println("send success")
-	time.Sleep(60 * time.Minute)
+	// time.Sleep(60 * time.Minute)
 }
 
 func handleConnection(conn *net.TCPConn) {

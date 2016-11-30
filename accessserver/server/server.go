@@ -73,7 +73,9 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 
 	//
 	reqChan := make(chan *Request, 1000)
-	go s.connectProxyServer(reqChan)
+	closeChan := make(chan uint32, 1000)
+
+	go s.connectProxyServer(reqChan, closeChan)
 
 	//
 	for {
@@ -82,11 +84,11 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 			log.Println("accept tcp fail", err.Error())
 			continue
 		}
-		go s.handleTcpConnection(conn, reqChan)
+		go s.handleTcpConnection(conn, reqChan, closeChan)
 	}
 }
 
-func (s *Server) connectProxyServer(reqChan <-chan *Request) {
+func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan uint32) {
 	addr, err := net.ResolveUDPAddr("udp", s.proxyUdpAddr)
 
 	if err != nil {
@@ -109,20 +111,20 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request) {
 	go s.recvHandler(conn, recvChan)
 
 	connMap := make(map[uint32]*net.TCPConn)
-
-	var sendCount uint32 = 0
-	var recvCount uint32 = 0
-
 	for {
 		select {
+		case connId := <-closeChan:
+			{
+				if connMap[connId] != nil {
+					delete(connMap, connId)
+				}
+			}
 		case req := <-reqChan:
 			{
 				if connMap[req.connId] == nil {
 					connMap[req.connId] = req.conn
 				}
 				sendChan <- req.reqPkg
-				sendCount++
-				//log.Println("send:", sendCount)
 			}
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()
@@ -143,8 +145,6 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request) {
 				}
 				tcpConn := connMap[(uint32)(protoWraperMessage.Rid)]
 				if tcpConn != nil {
-					recvCount++
-					//log.Println("recv:", recvCount)
 					tcpConn.Write(protoWraperMessage.Message)
 				}
 			}
@@ -175,7 +175,7 @@ func (s *Server) recvHandler(conn *net.UDPConn, recvChan chan<- []byte) {
 	}
 }
 
-func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request) {
+func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request, closeChan chan<- uint32) {
 
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
@@ -190,13 +190,14 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request)
 		atomic.AddInt32(&s.connCount, -1)
 		log.Println("connCount=", s.connCount)
 		conn.Close()
+		closeChan <- connId
 	}()
 
 	for true {
 		buf := make([]byte, 1024)
 		count, err := conn.Read(buf)
 		if err != nil {
-			log.Println(err.Error(), " ", conn)
+			log.Println(err.Error())
 			break
 		}
 		messages, err := decoder.Decode(buf[0:count])
@@ -209,12 +210,12 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request)
 				connId: connId,
 				conn:   conn,
 			}
-			s.handleMessage(request, message, reqChan)
+			s.handleMessage(request, message, reqChan, closeChan)
 		}
 	}
 }
 
-func (s *Server) handleMessage(request *Request, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) handleMessage(request *Request, message *coder.Message, reqChan chan<- *Request, closeChan chan<- uint32) {
 
 	//检测数据的合法性
 	protoMessage := bean.Factory((bean.MessageType)(message.Type))
@@ -223,19 +224,21 @@ func (s *Server) handleMessage(request *Request, message *coder.Message, reqChan
 	if protoMessage == nil {
 		log.Println("未识别的消息")
 		request.conn.Close()
+		closeChan <- request.connId
 		return
 	}
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
 		request.conn.Close()
+		closeChan <- request.connId
 		return
 	}
 
 	//只检查消息的合法性,然后将消息转发出去
-	s.transformMessage(request, message, reqChan)
+	s.transformMessage(request, message, reqChan, closeChan)
 }
 
-func (s *Server) transformMessage(request *Request, message *coder.Message, reqChan chan<- *Request) {
+func (s *Server) transformMessage(request *Request, message *coder.Message, reqChan chan<- *Request, closeChan chan<- uint32) {
 
 	//打包并且生成发送的数据包
 	wraperMessage := &bean.WraperMessage{
@@ -245,6 +248,8 @@ func (s *Server) transformMessage(request *Request, message *coder.Message, reqC
 	reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
 	if err != nil {
 		log.Println(err)
+		request.conn.Close()
+		closeChan <- request.connId
 	}
 	//将数据发送到通道
 	request.reqPkg = reqPkg

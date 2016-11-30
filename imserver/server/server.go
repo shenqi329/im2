@@ -47,10 +47,8 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 		os.Exit(1)
 	}
 
-	conn.SetReadBuffer(1024 * 1024 * 100)
-	conn.SetWriteBuffer(1024 * 1024 * 100)
 	log.Println("net.ListenUDP", addr)
-	//
+
 	reqChan := make(chan *Request, 1000)
 	var recvAndSendCount uint32 = 0
 
