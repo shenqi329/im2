@@ -1,16 +1,16 @@
 use sys;
 
-grant select on db_sso.* to user_select@`%` identified by 'user_select';
+CREATE DATABASE IF NOT EXISTS db_im DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
 
-grant select,update on db_sso.* to user_update@`%` identified by 'user_update';
+grant select on db_im.* to im_select@`%` identified by 'im_select';
 
-grant select,update,delete,insert on db_sso.* to user_connect@`%` identified by 'user_connect';
+grant select,update on db_im.* to im_update@`%` identified by 'im_update';
 
-grant all privileges on db_sso.* to dba@`%` identified by 'dba';
+grant select,update,delete,insert on db_im.* to im_connect@`%` identified by 'im_connect';
 
+grant all privileges on db_im.* to im_dba@`%` identified by 'im_dba';
 
-CREATE DATABASE IF NOT EXISTS db_sso DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
-use db_sso;
+use db_im;
 
 
 SHOW VARIABLES LIKE 'event_scheduler';

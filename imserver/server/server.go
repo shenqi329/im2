@@ -1,13 +1,16 @@
 package server
 
 import (
-	"fmt"
+	"errors"
 	"github.com/golang/protobuf/proto"
-	"im/protocal/bean"
+	imServiceResponse "im/imserver/response"
+	imService "im/imserver/service"
+	protocalBean "im/protocal/bean"
 	"im/protocal/coder"
 	"log"
 	"net"
 	"os"
+	"reflect"
 )
 
 type Request struct {
@@ -75,11 +78,11 @@ func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []by
 	}
 	//处理
 	for _, beanWraperMessage := range beanWraperMessages {
-		if beanWraperMessage.Type != bean.MessageTypeWraper {
+		if beanWraperMessage.Type != protocalBean.MessageTypeWraper {
 			continue
 		}
 
-		wraperMessage := &bean.WraperMessage{}
+		wraperMessage := &protocalBean.WraperMessage{}
 		if err := proto.Unmarshal(beanWraperMessage.Body, wraperMessage); err != nil {
 			log.Println(err)
 			continue
@@ -99,40 +102,90 @@ func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []by
 
 func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, reqChan chan<- *Request, rid uint64) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+	protoMessage := protocalBean.Factory((protocalBean.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
 		return
 	}
 	switch message.Type {
-	case bean.MessageTypeDeviceRegisteRequest:
+	case protocalBean.MessageTypeDeviceRegisteRequest:
 		{
-			s.handleRegisterRequest(conn, addr, protoMessage.(*bean.DeviceRegisteRequest), reqChan, rid)
+			s.handleRegisteRequest(conn, addr, protoMessage.(*protocalBean.DeviceRegisteRequest), rid)
 		}
-	case bean.MessageTypeDeviceLoginRequest:
+	case protocalBean.MessageTypeDeviceLoginRequest:
 		{
-			s.handleLoginRequest(conn, addr, protoMessage.(*bean.DeviceLoginRequest), reqChan, rid)
+			s.handleLoginRequest(conn, addr, protoMessage.(*protocalBean.DeviceLoginRequest), rid)
 		}
 	}
 }
 
-func (s *Server) handleRegisterRequest(conn *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceRegisteRequest, reqChan chan<- *Request, rid uint64) {
+func (s *Server) handleRegisteRequest(conn *net.UDPConn, addr *net.UDPAddr, deviceRegisteRequest *protocalBean.DeviceRegisteRequest, rid uint64) error {
 
-	response := &bean.DeviceRegisteResponse{
-		Rid:   request.Rid,
-		Code:  "00000001",
-		Desc:  "success",
-		Token: fmt.Sprintf("%d", rid),
+	tokenBean, err := imService.HandleRegisteRequest(deviceRegisteRequest)
+
+	if err != nil {
+		return s.ServiceHandleError(err, conn, addr, deviceRegisteRequest, protocalBean.MessageTypeDeviceRegisteResponse)
 	}
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
+
+	return nil
+	// response := &bean.DeviceRegisteResponse{
+	// 	Rid:   deviceRegisteRequest.Rid,
+	// 	Code:  "00000001",
+	// 	Desc:  "success",
+	// 	Token: fmt.Sprintf("%d", rid),
+	// }
+
+	// client := &http.Client{}
+	// httpRequest, err := http.NewRequest(http.MethodGet, "http://172.17.0.3:8081/user/info", nil)
+	// httpRequest.Header.Set("token", deviceRegisteRequest.SsoToken)
+	// resp, err := client.Do(httpRequest)
+	// defer resp.Body.Close()
+
+	// responseBean := &imResponse.Response{}
+	// json.NewDecoder(req.Body()).Decode(responseBean)
+
+	// if !strings.EqualFold(responseBean.Code, imResponse.CommonSuccess) {
+	// 	log.Println(responseBean.Desc)
+	// }
+
+	// buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteResponse, response)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	// s.wraperMessageAndSendBack(conn, addr, reqChan, rid, buffer)
+}
+
+func (s *Server) ServiceHandleError(err error, conn *net.UDPConn, addr *net.UDPAddr, deviceRegisteRequest *protocalBean.DeviceRegisteRequest, messageType protocalBean.MessageType) error {
+
+	e := reflect.Indirect(reflect.ValueOf(err))
+
+	response := &imServiceResponse.Response{}
+
+	code := e.FieldByName("Code")
+	if code.Kind() == reflect.String {
+		response.Code = code.String()
+	}
+	desc := e.FieldByName("Desc")
+	if desc.Kind() == reflect.String {
+		response.Desc = desc.String()
+	}
+
+	registerResponse := &protocalBean.DeviceRegisteResponse{
+		Rid:  deviceRegisteRequest.Rid,
+		Code: response.Code,
+		Desc: response.Desc,
+	}
+
+	buffer, err := coder.EncoderProtoMessage((int)(messageType), registerResponse)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
-	s.wraperMessageAndSendBack(conn, addr, reqChan, rid, buffer)
+	return s.wraperMessageAndSendBack(conn, addr, rid, buffer)
 }
 
-func (s *Server) handleLoginRequest(conn *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest, reqChan chan<- *Request, rid uint64) {
+func (s *Server) handleLoginRequest(conn *net.UDPConn, addr *net.UDPAddr, request *bean.DeviceLoginRequest, rid uint64) error {
 
 	response := &bean.DeviceLoginResponse{
 		Rid:  request.Rid,
@@ -140,15 +193,15 @@ func (s *Server) handleLoginRequest(conn *net.UDPConn, addr *net.UDPAddr, reques
 		Desc: "success",
 	}
 
-	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginResponse, response)
+	buffer, err := coder.EncoderProtoMessage((int)(bean.MessageTypeDeviceLoginResponse), response)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
-	s.wraperMessageAndSendBack(conn, addr, reqChan, rid, buffer)
+	return s.wraperMessageAndSendBack(conn, addr, rid, buffer)
 }
 
-func (s *Server) wraperMessageAndSendBack(conn *net.UDPConn, addr *net.UDPAddr, reqChan chan<- *Request, rid uint64, buffer []byte) {
+func (s *Server) wraperMessageAndSendBack(conn *net.UDPConn, addr *net.UDPAddr, rid uint64, buffer []byte) error {
 	wraperMessage := &bean.WraperMessage{
 		Rid:     rid,
 		Message: buffer,
@@ -156,8 +209,14 @@ func (s *Server) wraperMessageAndSendBack(conn *net.UDPConn, addr *net.UDPAddr, 
 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 
-	conn.WriteTo(buffer, addr)
+	count, err := conn.WriteTo(buffer, addr)
+	if count != len(buffer) {
+		err = errors.New("写入数据失败")
+		log.Println(err)
+		return err
+	}
+	return nil
 }
