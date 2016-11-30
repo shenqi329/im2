@@ -1,21 +1,134 @@
-package main
+package imserver
 
 import (
-	"im/imserver/server"
+	//"errors"
+	"github.com/golang/protobuf/proto"
+	//imResponse "im/imserver/response"
+	//imService "im/imserver/service"
+	protocolBean "im/protocol/bean"
+	"im/protocol/coder"
 	"log"
-	"runtime"
+	"net"
+	"os"
+	//"reflect"
 )
 
-func main() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+type Request struct {
+	isCancel bool
+	reqPkg   []byte
+	rspChan  chan<- []byte
+}
 
-	if runtime.GOOS == "windows" {
-		localUdpAddr := "localhost:6001"
-		s := server.NEWServer(localUdpAddr)
-		s.Run()
-	} else {
-		localUdpAddr := "172.17.0.5:6001"
-		s := server.NEWServer(localUdpAddr)
-		s.Run()
+type Server struct {
+	localUdpAddr string
+	handleFuncs  map[protocolBean.MessageType]func(c Context) error
+}
+
+func NEWServer(localUdpAddr string) *Server {
+	return &Server{
+		localUdpAddr: localUdpAddr,
+		handleFuncs:  make(map[protocolBean.MessageType]func(c Context) error),
+	}
+}
+
+func (s *Server) Handle(messageType protocolBean.MessageType, handle func(c Context) error) {
+	s.handleFuncs[messageType] = handle
+}
+
+func (s *Server) Run() {
+	s.listenOnUdpPort(s.localUdpAddr)
+}
+
+func (s *Server) listenOnUdpPort(localUdpAddr string) {
+
+	addr, err := net.ResolveUDPAddr("udp", localUdpAddr)
+
+	if err != nil {
+		log.Println("net.ResolveUDPAddr fail.", err)
+		os.Exit(1)
+	}
+
+	conn, err := net.ListenUDP("udp", addr)
+	defer conn.Close()
+
+	if err != nil {
+		log.Println("net.ListenUDP fail.", err)
+		os.Exit(1)
+	}
+
+	log.Println("net.ListenUDP", addr)
+
+	var recvAndSendCount uint32 = 0
+
+	for true {
+		buf := make([]byte, 1024)
+		rlen, remote, err := conn.ReadFromUDP(buf)
+		if err != nil {
+			log.Println("读取数据失败!", err.Error())
+			continue
+		}
+		recvAndSendCount++
+		//log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
+		go s.processHandler(conn, remote, buf[:rlen])
+	}
+}
+
+func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte) {
+
+	decoder := coder.NEWDecoder()
+	beanWraperMessages, err := decoder.Decode(msg)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	//处理
+	for _, beanWraperMessage := range beanWraperMessages {
+		if beanWraperMessage.Type != protocolBean.MessageTypeWraper {
+			continue
+		}
+
+		wraperMessage := &protocolBean.WraperMessage{}
+		if err := proto.Unmarshal(beanWraperMessage.Body, wraperMessage); err != nil {
+			log.Println(err)
+			continue
+		}
+
+		decoder.Reset()
+		beanMessages, err := decoder.Decode(wraperMessage.Message)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+		for _, beanMessage := range beanMessages {
+			s.handleMessage(conn, remote, beanMessage, wraperMessage.Rid)
+		}
+	}
+}
+
+func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, rid uint64) {
+
+	protoMessage := protocolBean.Factory((protocolBean.MessageType)(message.Type))
+	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	c := &context{
+		udpConn:      conn,
+		udpAddr:      addr,
+		protoMessage: protoMessage,
+		rid:          rid,
+	}
+
+	f := s.handleFuncs[(protocolBean.MessageType)(message.Type)]
+	if f == nil {
+		log.Println("不处理")
+		return
+	}
+
+	//处理收到的数据
+	if err := f(c); err != nil {
+		log.Println(err)
+		return
 	}
 }

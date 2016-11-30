@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	"im/protocal/bean"
-	"im/protocal/coder"
+	"im/protocol/bean"
+	"im/protocol/coder"
 	"log"
 	"net"
 	"runtime"

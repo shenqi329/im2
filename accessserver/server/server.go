@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/golang/protobuf/proto"
-	bean "im/protocal/bean"
-	coder "im/protocal/coder"
+	bean "im/protocol/bean"
+	coder "im/protocol/coder"
 	"log"
 	"net"
 	"os"
