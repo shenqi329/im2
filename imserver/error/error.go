@@ -14,14 +14,15 @@ var (
 	ErrorTokenInvalidated    = NEWError(CommonTokenInvalidated)
 )
 
+//模块码[01]
 const (
 	//通用状态模块码 [000]
-	CommonSuccess             = "00000001"
-	CommonIllegalParams       = "00000002"
-	CommonResourceNoExist     = "00000003"
-	CommonResourceExist       = "00000004"
-	CommonInternalServerError = "00000005"
-	CommonTokenInvalidated    = "00000006"
+	CommonSuccess             = "00000001" //成功的码各模块通用,都是00000001
+	CommonIllegalParams       = "01000002"
+	CommonResourceNoExist     = "01000003"
+	CommonResourceExist       = "01000004"
+	CommonInternalServerError = "01000005"
+	CommonTokenInvalidated    = "01000006"
 )
 
 var codeText = map[string]string{

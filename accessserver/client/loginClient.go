@@ -31,7 +31,7 @@ func getRid() uint64 {
 
 func connectToPort() {
 
-	raddr, err := net.ResolveTCPAddr("tcp", "172.17.0.4:6000")
+	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
 	if runtime.GOOS == "windows" {
 		raddr, err = net.ResolveTCPAddr("tcp", "localhost:6000")
 	}
@@ -52,35 +52,36 @@ func connectToPort() {
 	go handleConnection(connect)
 
 	for i := 0; i < 1; i++ {
-		{
-			registerRequest := &bean.DeviceRegisteRequest{
-				Rid:      getRid(),
-				SsoToken: "7f3ce0ecde6a4ad984126bd76b34f7a6",
-				AppId:    "89897",
-				DeviceId: "024b36dc22425556bc01605d438f4d0c",
-				Platform: "windows",
-			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteRequest, registerRequest)
-			if err != nil {
-				log.Println(err.Error())
-			}
-			connect.Write(buffer)
-			time.Sleep(1 * time.Millisecond)
-		}
 		// {
-		// 	loginRequest := &bean.DeviceLoginRequest{
+		// 	registerRequest := &bean.DeviceRegisteRequest{
 		// 		Rid:      getRid(),
-		// 		Token:    "123456dc22425556bc01605d438f4d0c",
+		// 		SsoToken: "7f3ce0ecde6a4ad984126bd76b34f7a6",
 		// 		AppId:    "89897",
 		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
 		// 		Platform: "windows",
 		// 	}
-		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+		// 	buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceRegisteRequest, registerRequest)
 		// 	if err != nil {
 		// 		log.Println(err.Error())
 		// 	}
 		// 	connect.Write(buffer)
+		// 	time.Sleep(1 * time.Millisecond)
 		// }
+		//time.Sleep(1 * time.Second)
+		{
+			loginRequest := &bean.DeviceLoginRequest{
+				Rid:      getRid(),
+				Token:    "14",
+				AppId:    "89897",
+				DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				Platform: "windows",
+			}
+			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			connect.Write(buffer)
+		}
 	}
 	// time.Sleep(60 * time.Minute)
 }

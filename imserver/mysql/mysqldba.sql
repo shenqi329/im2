@@ -4,14 +4,14 @@ drop table `t_token`;
 
 CREATE TABLE `t_token` (
 	`t_token_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-    `t_token_token` varchar(200) NOT NULL COMMENT '授权码',
+    `t_token_user_id` varchar(200) NOT NULL COMMENT '授权码',
     `t_token_device_id` varchar(36) NOT NULL  COMMENT '设备id',
     `t_token_app_id` varchar(36) NOT NULL  COMMENT '应用id',
     `t_token_platform` varchar(10) NOT NULL  COMMENT '平台',
     `t_token_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
-    `t_user_update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
+    `t_token_update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
      PRIMARY KEY (`t_token_id`),
-     UNIQUE KEY `t_token_token` (`t_token_token`)
+     UNIQUE KEY `t_token_device_id` (`t_token_device_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
 
 -- drop table `t_user`;

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"im/accessserver/server"
+	"im/accessserver"
 	"log"
 	"runtime"
 )
@@ -13,12 +13,12 @@ func main() {
 	if runtime.GOOS == "windows" {
 		localTcpAddr := "localhost:6000"
 		proxyUdpAddr := "localhost:6001"
-		s := server.NEWServer(localTcpAddr, proxyUdpAddr)
+		s := accessserver.NEWServer(localTcpAddr, proxyUdpAddr)
 		s.Run()
 	} else {
-		localTcpAddr := "172.17.0.4:6000"
-		proxyUdpAddr := "172.17.0.5:6001"
-		s := server.NEWServer(localTcpAddr, proxyUdpAddr)
+		localTcpAddr := "localhost:6000"
+		proxyUdpAddr := "localhost:6001"
+		s := accessserver.NEWServer(localTcpAddr, proxyUdpAddr)
 		s.Run()
 	}
 }

@@ -2,17 +2,39 @@ package dao
 
 import (
 	"im/imserver/bean"
+	"im/imserver/mysql"
 	"log"
-	"sso/mysql"
 )
 
-func InsertToken(token *bean.Token) (int64, error) {
+func InsertToken(token *bean.Token) error {
 
 	engine := mysql.GetXormEngine()
+	session := engine.NewSession()
 
-	count, err := engine.Insert(token)
+	err := session.Begin()
 
-	return count, err
+	_, err = engine.Delete(bean.Token{DeviceId: token.DeviceId})
+	if err != nil {
+		session.Rollback()
+		return err
+	}
+
+	_, err = engine.Insert(token)
+
+	if err != nil {
+		log.Println(err.Error())
+		session.Rollback()
+		return err
+	}
+
+	err = session.Commit()
+
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func GetToken(token *bean.Token) (bool, error) {

@@ -68,7 +68,7 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 			continue
 		}
 		recvAndSendCount++
-		//log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
+		log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
 		go s.processHandler(conn, remote, buf[:rlen])
 	}
 }

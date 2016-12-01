@@ -1,37 +1,86 @@
 package service
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"github.com/golang/protobuf/proto"
+	imServerBean "im/imserver/bean"
+	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	//imServerResponse "im/imserver/response"
+	imServerResponse "im/imserver/response"
 	protocolBean "im/protocol/bean"
-	//"log"
-	//"net/http"
-	//"strings"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 )
+
+func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) error {
+
+	if err := CheckDeviceId(deviceRegisteRequest.DeviceId); err != nil {
+		return err
+	}
+
+	if err := CheckToken(deviceRegisteRequest.SsoToken); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (protoMessage proto.Message, err error) {
 
-	// client := &http.Client{}
-	// httpRequest, err := http.NewRequest(http.MethodGet, "http://172.17.0.3:8081/user/info", nil)
-	// httpRequest.Header.Set("token", deviceRegisteRequest.SsoToken)
-	// resp, err := client.Do(httpRequest)
-	// defer resp.Body.Close()
+	if err = CheckDeviceRegistReqeust(deviceRegisteRequest); err != nil {
+		return
+	}
 
-	// responseBean := &imServerResponse.Response{}
-	// json.NewDecoder(resp.Body).Decode(responseBean)
+	client := &http.Client{}
+	httpRequest, err := http.NewRequest(http.MethodGet, "http://localhost:8081/user/info", nil)
+	httpRequest.Header.Set("token", deviceRegisteRequest.SsoToken)
+	resp, err := client.Do(httpRequest)
+	defer resp.Body.Close()
 
-	// if !strings.EqualFold(responseBean.Code, imServerError.CommonSuccess) {
-	// 	log.Println(responseBean.Desc)
-	// 	return
-	// }
+	if err != nil {
+		log.Println(err)
+		err = imServerError.ErrorInternalServerError
+		return
+	}
+
+	responseBean := &imServerResponse.Response{}
+	json.NewDecoder(resp.Body).Decode(responseBean)
+
+	maps, ok := responseBean.Data.(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	// log.Println(imServerBean.StructToJsonString(responseBean))
+	// log.Println(deviceRegisteRequest)
+
+	if !strings.EqualFold(responseBean.Code, imServerError.CommonSuccess) {
+		log.Println(responseBean.Desc)
+		return
+	}
+
+	createTime := time.Now()
+	tokenBean := &imServerBean.Token{
+		UserId:     maps["id"].(string),
+		DeviceId:   deviceRegisteRequest.DeviceId,
+		AppId:      deviceRegisteRequest.AppId,
+		Platform:   deviceRegisteRequest.Platform,
+		CreateTime: &createTime,
+		UpdateTime: &createTime,
+	}
+
+	if err = dao.InsertToken(tokenBean); err != nil {
+		return
+	}
 
 	protoMessage = &protocolBean.DeviceRegisteResponse{
 		Rid:   deviceRegisteRequest.Rid,
 		Code:  imServerError.CommonSuccess,
 		Desc:  imServerError.ErrorCodeToText(imServerError.CommonSuccess),
-		Token: "a token from handle registe",
+		Token: strconv.FormatInt(tokenBean.Id, 10),
 	}
 
 	return

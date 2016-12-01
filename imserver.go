@@ -19,12 +19,13 @@ func main() {
 	if runtime.GOOS == "windows" {
 		localUdpAddr = "localhost:6001"
 	} else {
-		localUdpAddr = "172.17.0.5:6001"
+		localUdpAddr = "localhost:6001"
 	}
 
 	s := imserver.NEWServer(localUdpAddr)
 
 	s.Handle(protocolBean.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
+	s.Handle(protocolBean.MessageTypeDeviceLoginRequest, controller.HandleLogin)
 
 	s.Run()
 }
