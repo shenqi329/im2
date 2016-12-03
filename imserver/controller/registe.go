@@ -19,7 +19,7 @@ func HandleRegiste(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return err
+		return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
 	return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, tokenBean)

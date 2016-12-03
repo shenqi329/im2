@@ -19,15 +19,21 @@ type Request struct {
 	rspChan  chan<- []byte
 }
 
+type ConnInfo struct {
+	IsLogin bool
+}
+
 type Server struct {
 	localUdpAddr string
 	handleFuncs  map[protocolBean.MessageType]func(c Context) error
+	connInfos    map[uint64]*ConnInfo
 }
 
 func NEWServer(localUdpAddr string) *Server {
 	return &Server{
 		localUdpAddr: localUdpAddr,
 		handleFuncs:  make(map[protocolBean.MessageType]func(c Context) error),
+		connInfos:    make(map[uint64]*ConnInfo),
 	}
 }
 
@@ -37,6 +43,16 @@ func (s *Server) Handle(messageType protocolBean.MessageType, handle func(c Cont
 
 func (s *Server) Run() {
 	s.listenOnUdpPort(s.localUdpAddr)
+}
+
+func (s *Server) GetConnInfo(connId uint64) *ConnInfo {
+	connInfo := s.connInfos[connId]
+	if connInfo == nil {
+		s.connInfos[connId] = &ConnInfo{
+			IsLogin: false,
+		}
+	}
+	return connInfo
 }
 
 func (s *Server) listenOnUdpPort(localUdpAddr string) {
@@ -100,12 +116,12 @@ func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []by
 			continue
 		}
 		for _, beanMessage := range beanMessages {
-			s.handleMessage(conn, remote, beanMessage, wraperMessage.Rid)
+			s.handleMessage(conn, remote, beanMessage, wraperMessage.ConnId)
 		}
 	}
 }
 
-func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, rid uint64) {
+func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64) {
 
 	protoMessage := protocolBean.Factory((protocolBean.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
@@ -114,10 +130,11 @@ func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *co
 	}
 
 	c := &context{
+		imServer:     s,
 		udpConn:      conn,
 		udpAddr:      addr,
 		protoMessage: protoMessage,
-		rid:          rid,
+		connId:       connId,
 	}
 
 	f := s.handleFuncs[(protocolBean.MessageType)(message.Type)]

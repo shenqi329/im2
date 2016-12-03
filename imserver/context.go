@@ -3,6 +3,7 @@ package imserver
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	imError "im/imserver/error"
 	protocolBean "im/protocol/bean"
 	protocolCoder "im/protocol/coder"
 	"log"
@@ -11,18 +12,20 @@ import (
 
 type (
 	Context interface {
+		IMServer() *Server
 		UDPConn() *net.UDPConn
 		UDPAddr() *net.UDPAddr
 		ProtoMessage() proto.Message
-		Rid() uint64
+		ConnId() uint64
 		WraperProtoMessage(messageType protocolBean.MessageType, message proto.Message) error
 	}
 
 	context struct {
+		imServer     *Server
 		udpConn      *net.UDPConn
 		udpAddr      *net.UDPAddr
 		protoMessage proto.Message
-		rid          uint64
+		connId       uint64
 	}
 )
 
@@ -38,8 +41,12 @@ func (c *context) ProtoMessage() proto.Message {
 	return c.protoMessage
 }
 
-func (c *context) Rid() uint64 {
-	return c.rid
+func (c *context) ConnId() uint64 {
+	return c.connId
+}
+
+func (c *context) IMServer() *Server {
+	return c.imServer
 }
 
 func (c *context) WraperProtoMessage(messageType protocolBean.MessageType, message proto.Message) error {
@@ -52,7 +59,7 @@ func (c *context) WraperProtoMessage(messageType protocolBean.MessageType, messa
 
 	//包装数据后返回
 	wraperMessage := &protocolBean.WraperMessage{
-		Rid:     c.Rid(),
+		ConnId:  c.ConnId(),
 		Message: buffer,
 	}
 
@@ -70,4 +77,24 @@ func (c *context) WraperProtoMessage(messageType protocolBean.MessageType, messa
 		return err
 	}
 	return nil
+}
+
+func NewCommonResponseWithError(err error, rid uint64) *protocolBean.CommonResponse {
+
+	imErr, ok := err.(*imError.IMError)
+	if ok {
+		response := &protocolBean.CommonResponse{
+			Rid:  rid,
+			Code: imErr.Code,
+			Desc: imErr.Desc,
+		}
+		return response
+	}
+
+	response := &protocolBean.CommonResponse{
+		Rid:  rid,
+		Code: imError.CommonInternalServerError,
+		Desc: imError.ErrorCodeToText(imError.CommonInternalServerError),
+	}
+	return response
 }

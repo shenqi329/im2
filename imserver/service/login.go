@@ -3,6 +3,7 @@ package service
 import (
 	// "encoding/json"
 	"github.com/golang/protobuf/proto"
+	imserver "im/imserver"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
@@ -12,10 +13,10 @@ import (
 	// "net/http"
 	"strconv"
 	// "strings"
-	// "time"
+	"time"
 )
 
-func HandleLogin(deviceLoginRequest *protocolBean.DeviceLoginRequest) (protoMessage proto.Message, err error) {
+func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) (protoMessage proto.Message, err error) {
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
@@ -25,12 +26,9 @@ func HandleLogin(deviceLoginRequest *protocolBean.DeviceLoginRequest) (protoMess
 		DeviceId: deviceLoginRequest.DeviceId,
 		Platform: deviceLoginRequest.Platform,
 	}
-	//log.Println(imServerBean.StructToJsonString(tokenBean))
-
 	has, err := dao.GetToken(tokenBean)
 
 	if err != nil {
-		//err = imServerError.ErrorInternalServerError
 		protoMessage = &protocolBean.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
 			Code: imServerError.CommonInternalServerError,
@@ -46,6 +44,16 @@ func HandleLogin(deviceLoginRequest *protocolBean.DeviceLoginRequest) (protoMess
 		}
 		//err = imServerError.ErrorNotFound
 		return
+	}
+	if tokenBean.LoginTime == nil {
+		timeNow := time.Now()
+		tokenBean.LoginTime = &timeNow
+	}
+
+	//将连接设置为登录状态
+	connInfo := c.IMServer().GetConnInfo(c.ConnId())
+	if !connInfo.IsLogin {
+		connInfo.IsLogin = true
 	}
 
 	protoMessage = &protocolBean.DeviceLoginResponse{

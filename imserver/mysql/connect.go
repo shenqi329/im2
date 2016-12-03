@@ -29,7 +29,7 @@ func GetXormEngine() *xorm.Engine {
 				return nil
 			}
 			engine = eng
-			//engine.ShowSQL(true)
+			engine.ShowSQL(true)
 		}
 
 		//engine.ShowExecTime(true)

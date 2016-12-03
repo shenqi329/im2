@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -49,13 +48,14 @@ func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (pro
 	responseBean := &imServerResponse.Response{}
 	json.NewDecoder(resp.Body).Decode(responseBean)
 
-	if !strings.EqualFold(responseBean.Code, imServerError.CommonSuccess) {
-		log.Println(responseBean.Desc)
+	if responseBean.IsFail() {
+		err = responseBean.ResponseToError()
 		return
 	}
 
 	maps, ok := responseBean.Data.(map[string]interface{})
 	if !ok {
+		err = imServerError.ErrorInternalServerError
 		return
 	}
 

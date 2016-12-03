@@ -37,6 +37,14 @@ func InsertToken(token *bean.Token) error {
 	return nil
 }
 
+func UpdateToken(bean *bean.Token, condiBeans ...interface{}) (int64, error) {
+	engine := mysql.GetXormEngine()
+
+	count, err := engine.Update(bean, condiBeans...)
+
+	return count, err
+}
+
 func GetToken(token *bean.Token) (bool, error) {
 	engine := mysql.GetXormEngine()
 

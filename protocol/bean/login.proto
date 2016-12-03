@@ -3,8 +3,17 @@ package bean;
 
 //messageType = 1
 message WraperMessage{
-	uint64 rid = 1;
-	bytes message = 2;
+	uint64 connId = 1;		//连接id,用来唯一标识一个tcp连接
+	bytes message = 2;		//传输的消息内容
+	bool isLoginIn = 3;		//是否是登入
+	bool isLoginOut = 4;	//是否是登出
+}
+
+//作为通用回应,messageType根据请求的情况而定
+message CommonResponse{
+	uint64 rid = 1;		//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
 }
 
 //messageType = 11

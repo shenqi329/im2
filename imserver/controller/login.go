@@ -15,11 +15,11 @@ func HandleLogin(c imserver.Context) error {
 		return nil
 	}
 
-	tokenBean, err := service.HandleLogin(request)
+	tokenBean, err := service.HandleLogin(c, request)
 
 	if err != nil {
 		log.Println(err)
-		return err
+		return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
 	return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, tokenBean)

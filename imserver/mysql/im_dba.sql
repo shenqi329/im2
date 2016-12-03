@@ -9,7 +9,8 @@ CREATE TABLE `t_token` (
     `t_token_app_id` varchar(36) NOT NULL  COMMENT '应用id',
     `t_token_platform` varchar(10) NOT NULL  COMMENT '平台',
     `t_token_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
-    `t_token_update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改日期',
+    `t_token_login_time` datetime  COMMENT '登录日期',
+    `t_token_logout_time` datetime COMMENT '登出日期',
      PRIMARY KEY (`t_token_id`),
      UNIQUE KEY `t_token_device_id` (`t_token_device_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';

@@ -18,6 +18,11 @@ type Request struct {
 	conn   *net.TCPConn
 }
 
+type ConnectInfo struct {
+	conn    *net.TCPConn
+	isLogin bool
+}
+
 type Server struct {
 	rid       uint64 //请求流水号
 	ridMutex  sync.Mutex
@@ -110,7 +115,7 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 	recvChan := make(chan []byte, 1000)
 	go s.recvHandler(conn, recvChan)
 
-	connMap := make(map[uint32]*net.TCPConn)
+	connMap := make(map[uint32]*ConnectInfo)
 	for {
 		select {
 		case connId := <-closeChan:
@@ -122,7 +127,10 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 		case req := <-reqChan:
 			{
 				if connMap[req.connId] == nil {
-					connMap[req.connId] = req.conn
+					connMap[req.connId] = &ConnectInfo{
+						conn:    req.conn,
+						isLogin: false,
+					}
 				}
 				sendChan <- req.reqPkg
 			}
@@ -143,9 +151,14 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 					log.Println(err)
 					continue
 				}
-				tcpConn := connMap[(uint32)(protoWraperMessage.Rid)]
-				if tcpConn != nil {
-					tcpConn.Write(protoWraperMessage.Message)
+				connInfo := connMap[(uint32)(protoWraperMessage.ConnId)]
+				if protoWraperMessage.IsLoginIn {
+					connInfo.isLogin = true
+				} else if protoWraperMessage.IsLoginOut {
+					connInfo.isLogin = false
+				}
+				if connInfo != nil {
+					connInfo.conn.Write(protoWraperMessage.Message)
 				}
 			}
 		}
@@ -242,7 +255,7 @@ func (s *Server) transformMessage(request *Request, message *coder.Message, reqC
 
 	//打包并且生成发送的数据包
 	wraperMessage := &bean.WraperMessage{
-		Rid:     (uint64)(request.connId),
+		ConnId:  (uint64)(request.connId),
 		Message: message.Encode(),
 	}
 	reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
