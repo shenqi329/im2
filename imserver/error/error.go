@@ -1,7 +1,6 @@
 package error
 
 import (
-	//"errors"
 	"fmt"
 )
 
@@ -40,17 +39,17 @@ func ErrorCodeToText(code string) string {
 }
 
 type (
-	SSOError struct {
+	IMError struct {
 		Code string
 		Desc string
 	}
 )
 
-func NEWError(code string) *SSOError {
-	return &SSOError{Code: code, Desc: ErrorCodeToText(code)}
+func NEWError(code string) *IMError {
+	return &IMError{Code: code, Desc: ErrorCodeToText(code)}
 }
 
-func (err *SSOError) Error() string {
+func (err *IMError) Error() string {
 	errString := fmt.Sprintf("code = %s,desc = %s", err.Code, err.Desc)
 	return errString
 }

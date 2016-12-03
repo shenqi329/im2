@@ -14,6 +14,17 @@ CREATE TABLE `t_token` (
      UNIQUE KEY `t_token_device_id` (`t_token_device_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
 
+drop table `t_message`;
+create table `t_message`(
+    `t_message_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `t_message_session_id` bigint(20) NOT NULL ,
+    `t_message_type` int(4) NOT NULL,
+    `t_message_content` varchar(20000) NOT NULL,
+    `t_message_index` bigint(20) NOT NULL ,
+    `t_message_createTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
+    PRIMARY KEY (`t_message_id`)
+)
+
 -- drop table `t_user`;
 -- 
 -- CREATE TABLE `t_user` (

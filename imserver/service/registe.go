@@ -49,18 +49,18 @@ func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (pro
 	responseBean := &imServerResponse.Response{}
 	json.NewDecoder(resp.Body).Decode(responseBean)
 
+	if !strings.EqualFold(responseBean.Code, imServerError.CommonSuccess) {
+		log.Println(responseBean.Desc)
+		return
+	}
+
 	maps, ok := responseBean.Data.(map[string]interface{})
 	if !ok {
 		return
 	}
 
-	// log.Println(imServerBean.StructToJsonString(responseBean))
-	// log.Println(deviceRegisteRequest)
-
-	if !strings.EqualFold(responseBean.Code, imServerError.CommonSuccess) {
-		log.Println(responseBean.Desc)
-		return
-	}
+	log.Println(imServerBean.StructToJsonString(responseBean))
+	log.Println(deviceRegisteRequest)
 
 	createTime := time.Now()
 	tokenBean := &imServerBean.Token{
@@ -69,7 +69,6 @@ func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (pro
 		AppId:      deviceRegisteRequest.AppId,
 		Platform:   deviceRegisteRequest.Platform,
 		CreateTime: &createTime,
-		UpdateTime: &createTime,
 	}
 
 	if err = dao.InsertToken(tokenBean); err != nil {
