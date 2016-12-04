@@ -71,7 +71,9 @@ func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (pro
 		CreateTime: &createTime,
 	}
 
-	if err = dao.InsertToken(tokenBean); err != nil {
+	_, err = dao.NewDao().Insert(tokenBean)
+	if err != nil {
+		err = imServerError.ErrorInternalServerError
 		return
 	}
 

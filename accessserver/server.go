@@ -13,9 +13,10 @@ import (
 )
 
 type Request struct {
-	reqPkg []byte
-	connId uint32
-	conn   *net.TCPConn
+	reqPkg  []byte
+	connId  uint32
+	conn    *net.TCPConn
+	isLogin bool
 }
 
 type ConnectInfo struct {
@@ -31,6 +32,8 @@ type Server struct {
 
 	localTcpAddr string
 	proxyUdpAddr string
+
+	handle func(context Context) error
 }
 
 func (s *Server) createRID() uint64 {
@@ -53,9 +56,10 @@ func NEWServer(localTcpAddr string, proxyUdpAddr string) (s *Server) {
 }
 
 func (s *Server) Run() {
-
+	if s.handle == nil {
+		s.handle = Handle
+	}
 	s.ListenOnTcpPort(s.localTcpAddr)
-
 }
 
 func (s *Server) ListenOnTcpPort(localTcpAddr string) {
@@ -89,6 +93,7 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 			log.Println("accept tcp fail", err.Error())
 			continue
 		}
+
 		go s.handleTcpConnection(conn, reqChan, closeChan)
 	}
 }
@@ -126,13 +131,28 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 			}
 		case req := <-reqChan:
 			{
-				if connMap[req.connId] == nil {
-					connMap[req.connId] = &ConnectInfo{
+				connInfo := connMap[req.connId]
+				if connInfo == nil {
+					connInfo = &ConnectInfo{
 						conn:    req.conn,
 						isLogin: false,
 					}
+					connMap[req.connId] = connInfo
 				}
-				sendChan <- req.reqPkg
+				wraperMessage := &bean.WraperMessage{
+					ConnId:    (uint64)(req.connId),
+					Message:   req.reqPkg,
+					IsLoginIn: connInfo.isLogin,
+				}
+				reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
+				if err != nil {
+					log.Println(err)
+					req.conn.Close()
+					if connMap[req.connId] != nil {
+						delete(connMap, req.connId)
+					}
+				}
+				sendChan <- reqPkg
 			}
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()
@@ -223,52 +243,17 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request,
 				connId: connId,
 				conn:   conn,
 			}
-			s.handleMessage(request, message, reqChan, closeChan)
+			context := &context{
+				reqChan:   reqChan,
+				message:   message,
+				closeChan: closeChan,
+				conn:      conn,
+				server:    s,
+				request:   request,
+			}
+			if s.handle != nil {
+				s.handle(context)
+			}
 		}
 	}
 }
-
-func (s *Server) handleMessage(request *Request, message *coder.Message, reqChan chan<- *Request, closeChan chan<- uint32) {
-
-	//检测数据的合法性
-	protoMessage := bean.Factory((bean.MessageType)(message.Type))
-	requestBean := &bean.DeviceRegisteRequest{}
-	proto.Unmarshal(message.Body, requestBean)
-	if protoMessage == nil {
-		log.Println("未识别的消息")
-		request.conn.Close()
-		closeChan <- request.connId
-		return
-	}
-	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
-		log.Println(err.Error())
-		request.conn.Close()
-		closeChan <- request.connId
-		return
-	}
-
-	//只检查消息的合法性,然后将消息转发出去
-	s.transformMessage(request, message, reqChan, closeChan)
-}
-
-func (s *Server) transformMessage(request *Request, message *coder.Message, reqChan chan<- *Request, closeChan chan<- uint32) {
-
-	//打包并且生成发送的数据包
-	wraperMessage := &bean.WraperMessage{
-		ConnId:  (uint64)(request.connId),
-		Message: message.Encode(),
-	}
-	reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
-	if err != nil {
-		log.Println(err)
-		request.conn.Close()
-		closeChan <- request.connId
-	}
-	//将数据发送到通道
-	request.reqPkg = reqPkg
-	reqChan <- request
-}
-
-//
-//
-//

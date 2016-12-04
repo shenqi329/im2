@@ -11,9 +11,10 @@ CREATE TABLE `t_token` (
     `t_token_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
     `t_token_login_time` datetime  COMMENT '登录日期',
     `t_token_logout_time` datetime COMMENT '登出日期',
-     PRIMARY KEY (`t_token_id`),
-     UNIQUE KEY `t_token_device_id` (`t_token_device_id`)
+     PRIMARY KEY (`t_token_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
+
+/*UNIQUE KEY `t_token_device_id` (`t_token_device_id`)*/
 
 drop table `t_message`;
 create table `t_message`(
@@ -24,6 +25,15 @@ create table `t_message`(
     `t_message_index` bigint(20) NOT NULL ,
     `t_message_createTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
     PRIMARY KEY (`t_message_id`)
+)
+
+drop table `t_session_map`;
+create table `t_session_map`(
+    `t_session_map_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `t_session_map_session_id` bigint(20) NOT NULL ,
+    `t_session_map_user_id` varchar(200) NOT NULL,
+    `t_session_map_read_index` bigint(20) NOT NULL,
+	PRIMARY KEY (`t_session_map_id`)
 )
 
 -- drop table `t_user`;

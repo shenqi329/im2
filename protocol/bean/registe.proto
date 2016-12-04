@@ -1,0 +1,19 @@
+syntax = "proto3";
+package bean;
+
+//messageType = 11
+message DeviceRegisteRequest{
+	uint64 rid = 1;	//流水号
+	string ssoToken = 11;	//统一登陆系统登陆token
+	string appId = 12;		//应用id
+	string deviceId = 13;	//设备id
+	string platform = 14;	//平台
+}
+
+//messageType = 12
+message DeviceRegisteResponse{
+	uint64 rid = 1;	//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
+ 	string token = 11;	//注册后的凭证
+}

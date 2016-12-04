@@ -2,20 +2,6 @@
 // source: login.proto
 // DO NOT EDIT!
 
-/*
-Package bean is a generated protocol buffer package.
-
-It is generated from these files:
-	login.proto
-
-It has these top-level messages:
-	WraperMessage
-	CommonResponse
-	DeviceRegisteRequest
-	DeviceRegisteResponse
-	DeviceLoginRequest
-	DeviceLoginResponse
-*/
 package bean
 
 import proto "github.com/golang/protobuf/proto"
@@ -26,176 +12,6 @@ import math "math"
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
-// messageType = 1
-type WraperMessage struct {
-	ConnId     uint64 `protobuf:"varint,1,opt,name=connId" json:"connId,omitempty"`
-	Message    []byte `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	IsLoginIn  bool   `protobuf:"varint,3,opt,name=isLoginIn" json:"isLoginIn,omitempty"`
-	IsLoginOut bool   `protobuf:"varint,4,opt,name=isLoginOut" json:"isLoginOut,omitempty"`
-}
-
-func (m *WraperMessage) Reset()                    { *m = WraperMessage{} }
-func (m *WraperMessage) String() string            { return proto.CompactTextString(m) }
-func (*WraperMessage) ProtoMessage()               {}
-func (*WraperMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *WraperMessage) GetConnId() uint64 {
-	if m != nil {
-		return m.ConnId
-	}
-	return 0
-}
-
-func (m *WraperMessage) GetMessage() []byte {
-	if m != nil {
-		return m.Message
-	}
-	return nil
-}
-
-func (m *WraperMessage) GetIsLoginIn() bool {
-	if m != nil {
-		return m.IsLoginIn
-	}
-	return false
-}
-
-func (m *WraperMessage) GetIsLoginOut() bool {
-	if m != nil {
-		return m.IsLoginOut
-	}
-	return false
-}
-
-// 作为通用回应,messageType根据请求的情况而定
-type CommonResponse struct {
-	Rid  uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
-	Code string `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
-	Desc string `protobuf:"bytes,3,opt,name=desc" json:"desc,omitempty"`
-}
-
-func (m *CommonResponse) Reset()                    { *m = CommonResponse{} }
-func (m *CommonResponse) String() string            { return proto.CompactTextString(m) }
-func (*CommonResponse) ProtoMessage()               {}
-func (*CommonResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *CommonResponse) GetRid() uint64 {
-	if m != nil {
-		return m.Rid
-	}
-	return 0
-}
-
-func (m *CommonResponse) GetCode() string {
-	if m != nil {
-		return m.Code
-	}
-	return ""
-}
-
-func (m *CommonResponse) GetDesc() string {
-	if m != nil {
-		return m.Desc
-	}
-	return ""
-}
-
-// messageType = 11
-type DeviceRegisteRequest struct {
-	Rid      uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
-	SsoToken string `protobuf:"bytes,11,opt,name=ssoToken" json:"ssoToken,omitempty"`
-	AppId    string `protobuf:"bytes,12,opt,name=appId" json:"appId,omitempty"`
-	DeviceId string `protobuf:"bytes,13,opt,name=deviceId" json:"deviceId,omitempty"`
-	Platform string `protobuf:"bytes,14,opt,name=platform" json:"platform,omitempty"`
-}
-
-func (m *DeviceRegisteRequest) Reset()                    { *m = DeviceRegisteRequest{} }
-func (m *DeviceRegisteRequest) String() string            { return proto.CompactTextString(m) }
-func (*DeviceRegisteRequest) ProtoMessage()               {}
-func (*DeviceRegisteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *DeviceRegisteRequest) GetRid() uint64 {
-	if m != nil {
-		return m.Rid
-	}
-	return 0
-}
-
-func (m *DeviceRegisteRequest) GetSsoToken() string {
-	if m != nil {
-		return m.SsoToken
-	}
-	return ""
-}
-
-func (m *DeviceRegisteRequest) GetAppId() string {
-	if m != nil {
-		return m.AppId
-	}
-	return ""
-}
-
-func (m *DeviceRegisteRequest) GetDeviceId() string {
-	if m != nil {
-		return m.DeviceId
-	}
-	return ""
-}
-
-func (m *DeviceRegisteRequest) GetPlatform() string {
-	if m != nil {
-		return m.Platform
-	}
-	return ""
-}
-
-// messageType = 12
-type DeviceRegisteResponse struct {
-	Rid   uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
-	Code  string `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
-	Desc  string `protobuf:"bytes,3,opt,name=desc" json:"desc,omitempty"`
-	Token string `protobuf:"bytes,11,opt,name=token" json:"token,omitempty"`
-}
-
-func (m *DeviceRegisteResponse) Reset()                    { *m = DeviceRegisteResponse{} }
-func (m *DeviceRegisteResponse) String() string            { return proto.CompactTextString(m) }
-func (*DeviceRegisteResponse) ProtoMessage()               {}
-func (*DeviceRegisteResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *DeviceRegisteResponse) GetRid() uint64 {
-	if m != nil {
-		return m.Rid
-	}
-	return 0
-}
-
-func (m *DeviceRegisteResponse) GetCode() string {
-	if m != nil {
-		return m.Code
-	}
-	return ""
-}
-
-func (m *DeviceRegisteResponse) GetDesc() string {
-	if m != nil {
-		return m.Desc
-	}
-	return ""
-}
-
-func (m *DeviceRegisteResponse) GetToken() string {
-	if m != nil {
-		return m.Token
-	}
-	return ""
-}
 
 // messageType = 13
 type DeviceLoginRequest struct {
@@ -209,7 +25,7 @@ type DeviceLoginRequest struct {
 func (m *DeviceLoginRequest) Reset()                    { *m = DeviceLoginRequest{} }
 func (m *DeviceLoginRequest) String() string            { return proto.CompactTextString(m) }
 func (*DeviceLoginRequest) ProtoMessage()               {}
-func (*DeviceLoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*DeviceLoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
 func (m *DeviceLoginRequest) GetRid() uint64 {
 	if m != nil {
@@ -256,7 +72,7 @@ type DeviceLoginResponse struct {
 func (m *DeviceLoginResponse) Reset()                    { *m = DeviceLoginResponse{} }
 func (m *DeviceLoginResponse) String() string            { return proto.CompactTextString(m) }
 func (*DeviceLoginResponse) ProtoMessage()               {}
-func (*DeviceLoginResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*DeviceLoginResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
 func (m *DeviceLoginResponse) GetRid() uint64 {
 	if m != nil {
@@ -280,35 +96,24 @@ func (m *DeviceLoginResponse) GetDesc() string {
 }
 
 func init() {
-	proto.RegisterType((*WraperMessage)(nil), "bean.WraperMessage")
-	proto.RegisterType((*CommonResponse)(nil), "bean.CommonResponse")
-	proto.RegisterType((*DeviceRegisteRequest)(nil), "bean.DeviceRegisteRequest")
-	proto.RegisterType((*DeviceRegisteResponse)(nil), "bean.DeviceRegisteResponse")
 	proto.RegisterType((*DeviceLoginRequest)(nil), "bean.DeviceLoginRequest")
 	proto.RegisterType((*DeviceLoginResponse)(nil), "bean.DeviceLoginResponse")
 }
 
-func init() { proto.RegisterFile("login.proto", fileDescriptor0) }
+func init() { proto.RegisterFile("login.proto", fileDescriptor1) }
 
-var fileDescriptor0 = []byte{
-	// 301 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x92, 0x3f, 0x4f, 0xf3, 0x30,
-	0x10, 0xc6, 0xe5, 0xb7, 0x79, 0x4b, 0x7b, 0xfd, 0x23, 0x64, 0x0a, 0xb2, 0x10, 0x42, 0x55, 0xa6,
-	0x4c, 0x2c, 0x7c, 0x04, 0x58, 0x82, 0x40, 0x95, 0x2c, 0x24, 0xe6, 0x34, 0x3e, 0xa2, 0x88, 0xc6,
-	0x67, 0x62, 0x97, 0x95, 0x9d, 0x91, 0x4f, 0x8c, 0x6c, 0x37, 0x50, 0x50, 0x99, 0xca, 0x76, 0xbf,
-	0xbb, 0xdc, 0x3d, 0xcf, 0x13, 0x19, 0x46, 0x2b, 0xaa, 0x6a, 0x7d, 0x61, 0x5a, 0x72, 0xc4, 0x93,
-	0x25, 0x16, 0x3a, 0x7d, 0x85, 0xc9, 0x43, 0x5b, 0x18, 0x6c, 0xef, 0xd0, 0xda, 0xa2, 0x42, 0x7e,
-	0x02, 0xfd, 0x92, 0xb4, 0xce, 0x95, 0x60, 0x73, 0x96, 0x25, 0x72, 0x43, 0x5c, 0xc0, 0x41, 0x13,
-	0x3f, 0x11, 0xff, 0xe6, 0x2c, 0x1b, 0xcb, 0x0e, 0xf9, 0x19, 0x0c, 0x6b, 0x7b, 0xeb, 0x2f, 0xe7,
-	0x5a, 0xf4, 0xe6, 0x2c, 0x1b, 0xc8, 0xaf, 0x06, 0x3f, 0x07, 0xd8, 0xc0, 0x62, 0xed, 0x44, 0x12,
-	0xc6, 0x5b, 0x9d, 0xf4, 0x06, 0xa6, 0x57, 0xd4, 0x34, 0xa4, 0x25, 0x5a, 0x43, 0xda, 0x22, 0x3f,
-	0x84, 0x5e, 0x5b, 0x77, 0xf2, 0xbe, 0xe4, 0x1c, 0x92, 0x92, 0x54, 0x14, 0x1e, 0xca, 0x50, 0xfb,
-	0x9e, 0x42, 0x5b, 0x06, 0xc1, 0xa1, 0x0c, 0x75, 0xfa, 0xce, 0x60, 0x76, 0x8d, 0x2f, 0x75, 0x89,
-	0x12, 0xab, 0xda, 0x3a, 0x94, 0xf8, 0xbc, 0x46, 0xeb, 0x76, 0x9c, 0x3c, 0x85, 0x81, 0xb5, 0x74,
-	0x4f, 0x4f, 0xa8, 0xc5, 0x28, 0x9c, 0xf8, 0x64, 0x3e, 0x83, 0xff, 0x85, 0x31, 0xb9, 0x12, 0xe3,
-	0x30, 0x88, 0xe0, 0x37, 0x54, 0xb8, 0x9d, 0x2b, 0x31, 0x89, 0x1b, 0x1d, 0xfb, 0x99, 0x59, 0x15,
-	0xee, 0x91, 0xda, 0x46, 0x4c, 0xe3, 0xac, 0xe3, 0xb4, 0x82, 0xe3, 0x1f, 0x9e, 0xf6, 0xcd, 0xe9,
-	0x0d, 0xba, 0x2d, 0xe7, 0x11, 0xd2, 0x37, 0x06, 0x3c, 0x2a, 0x85, 0x9f, 0xfb, 0x7b, 0xf6, 0x9d,
-	0xeb, 0x7f, 0x9c, 0x7a, 0x01, 0x47, 0xdf, 0xbc, 0xec, 0x9b, 0x79, 0xd9, 0x0f, 0xaf, 0xf6, 0xf2,
-	0x23, 0x00, 0x00, 0xff, 0xff, 0x43, 0xc4, 0x40, 0xf9, 0xc4, 0x02, 0x00, 0x00,
+var fileDescriptor1 = []byte{
+	// 185 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0xc9, 0x4f, 0xcf,
+	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x49, 0x4a, 0x4d, 0xcc, 0x53, 0xea, 0x62,
+	0xe4, 0x12, 0x72, 0x49, 0x2d, 0xcb, 0x4c, 0x4e, 0xf5, 0x01, 0xc9, 0x05, 0xa5, 0x16, 0x96, 0xa6,
+	0x16, 0x97, 0x08, 0x09, 0x70, 0x31, 0x17, 0x65, 0xa6, 0x48, 0x30, 0x2a, 0x30, 0x6a, 0xb0, 0x04,
+	0x81, 0x98, 0x42, 0x22, 0x5c, 0xac, 0x25, 0xf9, 0xd9, 0xa9, 0x79, 0x12, 0xdc, 0x0a, 0x8c, 0x1a,
+	0x9c, 0x41, 0x10, 0x0e, 0x48, 0x34, 0xb1, 0xa0, 0xc0, 0x33, 0x45, 0x82, 0x07, 0x22, 0x0a, 0xe6,
+	0x08, 0x49, 0x71, 0x71, 0xa4, 0x80, 0xcd, 0xf4, 0x4c, 0x91, 0xe0, 0x05, 0x4b, 0xc0, 0xf9, 0x20,
+	0xb9, 0x82, 0x9c, 0xc4, 0x92, 0xb4, 0xfc, 0xa2, 0x5c, 0x09, 0x3e, 0x88, 0x1c, 0x8c, 0xaf, 0xe4,
+	0xcf, 0x25, 0x8c, 0xe2, 0x96, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x2c, 0x8e, 0x11, 0xe2, 0x62,
+	0x49, 0xce, 0x4f, 0x49, 0x95, 0x60, 0x02, 0x1b, 0x00, 0x66, 0x83, 0xc4, 0x52, 0x52, 0x8b, 0x93,
+	0x25, 0x98, 0x21, 0x62, 0x20, 0x76, 0x12, 0x1b, 0xd8, 0xab, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0xc8, 0xc8, 0xd0, 0x9f, 0xf9, 0x00, 0x00, 0x00,
 }

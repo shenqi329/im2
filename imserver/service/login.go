@@ -1,18 +1,14 @@
 package service
 
 import (
-	// "encoding/json"
 	"github.com/golang/protobuf/proto"
 	imserver "im/imserver"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	// imServerResponse "im/imserver/response"
 	protocolBean "im/protocol/bean"
-	//"log"
-	// "net/http"
+	"log"
 	"strconv"
-	// "strings"
 	"time"
 )
 
@@ -26,7 +22,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 		DeviceId: deviceLoginRequest.DeviceId,
 		Platform: deviceLoginRequest.Platform,
 	}
-	has, err := dao.GetToken(tokenBean)
+	has, err := dao.NewDao().Get(tokenBean)
 
 	if err != nil {
 		protoMessage = &protocolBean.DeviceLoginResponse{
@@ -52,9 +48,13 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 
 	//将连接设置为登录状态
 	connInfo := c.IMServer().GetConnInfo(c.ConnId())
-	if !connInfo.IsLogin {
-		connInfo.IsLogin = true
+	if connInfo != nil {
+		if !connInfo.IsLogin {
+			connInfo.IsLogin = true
+		}
 	}
+
+	sendNofity(c, deviceLoginRequest)
 
 	protoMessage = &protocolBean.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
@@ -63,4 +63,38 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 	}
 
 	return
+}
+
+func sendNofity(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) {
+
+	var sessionMaps []*imServerBean.SessionMap
+
+	err := dao.NewDao().Find(&sessionMaps, &imServerBean.SessionMap{
+		UserId: "1",
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for _, sessionMap := range sessionMaps {
+		sendNofityWithSessionMap(sessionMap)
+	}
+}
+
+func sendNofityWithSessionMap(sessionMap *imServerBean.SessionMap) {
+
+	var messages []*imServerBean.Message
+
+	err := dao.NewDao().Find(&messages, &imServerBean.Message{
+		SessionId: sessionMap.SessionId,
+	})
+
+	index, err := dao.MessageMaxIndex(sessionMap.SessionId)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(index)
 }

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package bean;
+
+//作为通用回应,messageType根据请求的情况而定
+message CommonResponse{
+	uint64 rid = 1;		//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
+}

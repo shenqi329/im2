@@ -48,9 +48,10 @@ func (s *Server) Run() {
 func (s *Server) GetConnInfo(connId uint64) *ConnInfo {
 	connInfo := s.connInfos[connId]
 	if connInfo == nil {
-		s.connInfos[connId] = &ConnInfo{
+		connInfo = &ConnInfo{
 			IsLogin: false,
 		}
+		s.connInfos[connId] = connInfo
 	}
 	return connInfo
 }

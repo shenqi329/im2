@@ -55,7 +55,7 @@ func connectToPort() {
 		// {
 		// 	registerRequest := &bean.DeviceRegisteRequest{
 		// 		Rid:      getRid(),
-		// 		SsoToken: "aea4584c6d3944de806aa7986fe1e6ce",
+		// 		SsoToken: "0f53d082677948809651a4e1eabafb76",
 		// 		AppId:    "89897",
 		// 		DeviceId: "024b36dc22425556bc01605d438f4d0c",
 		// 		Platform: "windows",
@@ -67,8 +67,8 @@ func connectToPort() {
 		// 	connect.Write(buffer)
 		// 	time.Sleep(1 * time.Millisecond)
 		// }
-		//time.Sleep(1 * time.Second)
-		{
+		// time.Sleep(1 * time.Millisecond)
+		if runtime.GOOS == "windows" {
 			loginRequest := &bean.DeviceLoginRequest{
 				Rid:      getRid(),
 				Token:    "1",
@@ -76,6 +76,20 @@ func connectToPort() {
 				DeviceId: "024b36dc22425556bc01605d438f4d0c",
 				Platform: "windows",
 			}
+			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			connect.Write(buffer)
+		} else {
+			loginRequest := &bean.DeviceLoginRequest{
+				Rid:      getRid(),
+				Token:    "1",
+				AppId:    "89897",
+				DeviceId: "024b36dc22425556bc01605d438f4d0c",
+				Platform: "windows",
+			}
+
 			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
 			if err != nil {
 				log.Println(err.Error())
