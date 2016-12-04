@@ -13,6 +13,8 @@ const (
 	MessageTypeWraper                = 1
 	MessageTypeCreateSessionRequest  = 2
 	MessageTypeCreateSessionResponse = 3
+	MessageTypeCreateMessageRequest  = 4
+	MessageTypeCreateMessageResponse = 5
 )
 
 //使用类型 11-
@@ -28,6 +30,8 @@ var kinds = map[MessageType]func() proto.Message{
 	MessageTypeWraper:                func() proto.Message { return &WraperMessage{} },
 	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
 	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
+	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
+	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
 
 	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
 	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },

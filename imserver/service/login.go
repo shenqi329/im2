@@ -54,7 +54,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 		}
 	}
 
-	sendSyncInform(c, deviceLoginRequest)
+	go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
 
 	protoMessage = &protocolBean.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
@@ -66,12 +66,12 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 }
 
 //发送同步通知
-func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) {
+func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest, userId string) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
 	err := dao.NewDao().Find(&sessionMaps, &imServerBean.SessionMap{
-		UserId: "1",
+		UserId: userId,
 	})
 	if err != nil {
 		log.Println(err)

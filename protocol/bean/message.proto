@@ -1,0 +1,15 @@
+syntax = "proto3";
+package bean;
+
+message CreateMessageRequest{
+	uint64 rid = 1;			//流水号
+	int64 sessionId = 11;	//会话id
+ 	int32 type = 12;		//消息类型
+	string Content = 13;	//消息的内容
+}
+
+message CreateMessageResponse{
+	uint64 rid = 1;		//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
+}

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package bean;
 
-//messageType = 11
+
 message DeviceRegisteRequest{
 	uint64 rid = 1;	//流水号
 	string ssoToken = 11;	//统一登陆系统登陆token
@@ -10,7 +10,6 @@ message DeviceRegisteRequest{
 	string platform = 14;	//平台
 }
 
-//messageType = 12
 message DeviceRegisteResponse{
 	uint64 rid = 1;	//流水号
 	string code = 2;	//回应的响应码

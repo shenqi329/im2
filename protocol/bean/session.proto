@@ -5,7 +5,6 @@ message Session{
 	uint64 sessionId = 11;
 }
 
-//messageType = 2
 message CreateSessionRequest{
 	uint64 rid = 1;		//流水号
  	string appId = 11;	//app唯一标识

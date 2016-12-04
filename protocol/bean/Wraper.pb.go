@@ -13,7 +13,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// messageType = 1
 type WraperMessage struct {
 	ConnId     uint64 `protobuf:"varint,1,opt,name=connId" json:"connId,omitempty"`
 	Message    []byte `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -24,7 +23,7 @@ type WraperMessage struct {
 func (m *WraperMessage) Reset()                    { *m = WraperMessage{} }
 func (m *WraperMessage) String() string            { return proto.CompactTextString(m) }
 func (*WraperMessage) ProtoMessage()               {}
-func (*WraperMessage) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
+func (*WraperMessage) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
 
 func (m *WraperMessage) GetConnId() uint64 {
 	if m != nil {
@@ -58,9 +57,9 @@ func init() {
 	proto.RegisterType((*WraperMessage)(nil), "bean.WraperMessage")
 }
 
-func init() { proto.RegisterFile("Wraper.proto", fileDescriptor5) }
+func init() { proto.RegisterFile("Wraper.proto", fileDescriptor6) }
 
-var fileDescriptor5 = []byte{
+var fileDescriptor6 = []byte{
 	// 133 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x09, 0x2f, 0x4a, 0x2c,
 	0x48, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x49, 0x4a, 0x4d, 0xcc, 0x53, 0xaa,

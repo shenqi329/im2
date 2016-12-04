@@ -20,7 +20,7 @@ type Session struct {
 func (m *Session) Reset()                    { *m = Session{} }
 func (m *Session) String() string            { return proto.CompactTextString(m) }
 func (*Session) ProtoMessage()               {}
-func (*Session) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
+func (*Session) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
 
 func (m *Session) GetSessionId() uint64 {
 	if m != nil {
@@ -29,7 +29,6 @@ func (m *Session) GetSessionId() uint64 {
 	return 0
 }
 
-// messageType = 2
 type CreateSessionRequest struct {
 	Rid          uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
 	AppId        string `protobuf:"bytes,11,opt,name=appId" json:"appId,omitempty"`
@@ -40,7 +39,7 @@ type CreateSessionRequest struct {
 func (m *CreateSessionRequest) Reset()                    { *m = CreateSessionRequest{} }
 func (m *CreateSessionRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateSessionRequest) ProtoMessage()               {}
-func (*CreateSessionRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
+func (*CreateSessionRequest) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
 
 func (m *CreateSessionRequest) GetRid() uint64 {
 	if m != nil {
@@ -80,7 +79,7 @@ type CreateSessionResponse struct {
 func (m *CreateSessionResponse) Reset()                    { *m = CreateSessionResponse{} }
 func (m *CreateSessionResponse) String() string            { return proto.CompactTextString(m) }
 func (*CreateSessionResponse) ProtoMessage()               {}
-func (*CreateSessionResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
+func (*CreateSessionResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{2} }
 
 func (m *CreateSessionResponse) GetRid() uint64 {
 	if m != nil {
@@ -116,9 +115,9 @@ func init() {
 	proto.RegisterType((*CreateSessionResponse)(nil), "bean.CreateSessionResponse")
 }
 
-func init() { proto.RegisterFile("session.proto", fileDescriptor3) }
+func init() { proto.RegisterFile("session.proto", fileDescriptor4) }
 
-var fileDescriptor3 = []byte{
+var fileDescriptor4 = []byte{
 	// 213 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x90, 0xbf, 0x4e, 0xc6, 0x20,
 	0x14, 0xc5, 0x83, 0xed, 0xa7, 0xf9, 0x6e, 0xdb, 0xc4, 0x90, 0x9a, 0x30, 0x38, 0x34, 0x2c, 0x76,

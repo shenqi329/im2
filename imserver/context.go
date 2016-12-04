@@ -65,7 +65,7 @@ func (c *context) SendProtoMessage(messageType protocolBean.MessageType, message
 
 	if c.needWraper {
 		//包装数据后返回
-		log.Println("包装数据")
+		//log.Println("包装数据")
 		wraperMessage := &protocolBean.WraperMessage{
 			ConnId:  c.ConnId(),
 			Message: buffer,

@@ -14,3 +14,7 @@ delete from t_session;
 select * from t_session_map;
 
 select * from t_session;
+select * from t_message;
+select * from t_token;
+
+select count(t_message_index) from t_message where t_message_session_id = 32;

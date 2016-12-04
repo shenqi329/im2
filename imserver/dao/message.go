@@ -41,7 +41,7 @@ import (
 func MessageMaxIndex(sessionId int64) (int64, error) {
 
 	engine := mysql.GetXormEngine()
-	sqlQuery := "select max(t_message_index) from t_message where t_message_session_id = ?"
+	sqlQuery := "select count(t_message_index) from t_message where t_message_session_id = ?"
 
 	var index int64
 	err := engine.DB().QueryRow(sqlQuery, sessionId).Scan(&index)

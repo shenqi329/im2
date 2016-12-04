@@ -13,7 +13,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// messageType = 11
 type DeviceRegisteRequest struct {
 	Rid      uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
 	SsoToken string `protobuf:"bytes,11,opt,name=ssoToken" json:"ssoToken,omitempty"`
@@ -25,7 +24,7 @@ type DeviceRegisteRequest struct {
 func (m *DeviceRegisteRequest) Reset()                    { *m = DeviceRegisteRequest{} }
 func (m *DeviceRegisteRequest) String() string            { return proto.CompactTextString(m) }
 func (*DeviceRegisteRequest) ProtoMessage()               {}
-func (*DeviceRegisteRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
+func (*DeviceRegisteRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
 
 func (m *DeviceRegisteRequest) GetRid() uint64 {
 	if m != nil {
@@ -62,7 +61,6 @@ func (m *DeviceRegisteRequest) GetPlatform() string {
 	return ""
 }
 
-// messageType = 12
 type DeviceRegisteResponse struct {
 	Rid   uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
 	Code  string `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
@@ -73,7 +71,7 @@ type DeviceRegisteResponse struct {
 func (m *DeviceRegisteResponse) Reset()                    { *m = DeviceRegisteResponse{} }
 func (m *DeviceRegisteResponse) String() string            { return proto.CompactTextString(m) }
 func (*DeviceRegisteResponse) ProtoMessage()               {}
-func (*DeviceRegisteResponse) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
+func (*DeviceRegisteResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
 
 func (m *DeviceRegisteResponse) GetRid() uint64 {
 	if m != nil {
@@ -108,9 +106,9 @@ func init() {
 	proto.RegisterType((*DeviceRegisteResponse)(nil), "bean.DeviceRegisteResponse")
 }
 
-func init() { proto.RegisterFile("registe.proto", fileDescriptor2) }
+func init() { proto.RegisterFile("registe.proto", fileDescriptor3) }
 
-var fileDescriptor2 = []byte{
+var fileDescriptor3 = []byte{
 	// 196 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x90, 0x41, 0xaa, 0xc2, 0x30,
 	0x10, 0x86, 0xc9, 0x6b, 0xdf, 0xe3, 0x19, 0xad, 0x48, 0xa8, 0x10, 0x5c, 0x95, 0xae, 0xba, 0x72,

@@ -8,6 +8,7 @@ Package bean is a generated protocol buffer package.
 It is generated from these files:
 	commonResponse.proto
 	login.proto
+	message.proto
 	registe.proto
 	session.proto
 	syncInform.proto
@@ -17,6 +18,8 @@ It has these top-level messages:
 	CommonResponse
 	DeviceLoginRequest
 	DeviceLoginResponse
+	CreateMessageRequest
+	CreateMessageResponse
 	DeviceRegisteRequest
 	DeviceRegisteResponse
 	Session

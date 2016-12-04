@@ -1,7 +1,6 @@
 syntax = "proto3";
 package bean;
 
-//messageType = 1
 message WraperMessage{
 	uint64 connId = 1;		//连接id,用来唯一标识一个tcp连接
 	bytes message = 2;		//传输的消息内容

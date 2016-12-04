@@ -26,7 +26,7 @@ type ConnInfo struct {
 type Server struct {
 	localUdpAddr string
 	handleFuncs  map[protocolBean.MessageType]func(c Context) error
-	connInfos    map[uint64]*ConnInfo
+	connInfos    map[uint64]*ConnInfo //connId
 }
 
 func NEWServer(localUdpAddr string) *Server {
