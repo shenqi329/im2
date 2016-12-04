@@ -9,6 +9,8 @@ It is generated from these files:
 	commonResponse.proto
 	login.proto
 	registe.proto
+	session.proto
+	syncInform.proto
 	Wraper.proto
 
 It has these top-level messages:
@@ -17,6 +19,10 @@ It has these top-level messages:
 	DeviceLoginResponse
 	DeviceRegisteRequest
 	DeviceRegisteResponse
+	Session
+	CreateSessionRequest
+	CreateSessionResponse
+	SyncInform
 	WraperMessage
 */
 package bean

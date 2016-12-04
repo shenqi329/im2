@@ -2,29 +2,38 @@ package bean
 
 import (
 	proto "github.com/golang/protobuf/proto"
+	//"log"
+	//"reflect"
 )
 
 type MessageType int32
 
-//系统保留类型 1-10
+//系统保留类型 1-100
 const (
-	MessageTypeWraper = 1
+	MessageTypeWraper                = 1
+	MessageTypeCreateSessionRequest  = 2
+	MessageTypeCreateSessionResponse = 3
 )
 
 //使用类型 11-
 const (
-	MessageTypeDeviceRegisteRequest  = 11
-	MessageTypeDeviceRegisteResponse = 12
-	MessageTypeDeviceLoginRequest    = 13
-	MessageTypeDeviceLoginResponse   = 14
+	MessageTypeDeviceRegisteRequest  = 101
+	MessageTypeDeviceRegisteResponse = 102
+	MessageTypeDeviceLoginRequest    = 103
+	MessageTypeDeviceLoginResponse   = 104
+	MessageTypeSyncInform            = 105
 )
 
 var kinds = map[MessageType]func() proto.Message{
 	MessageTypeWraper:                func() proto.Message { return &WraperMessage{} },
+	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
+	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
+
 	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
 	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },
 	MessageTypeDeviceLoginRequest:    func() proto.Message { return &DeviceLoginRequest{} },
 	MessageTypeDeviceLoginResponse:   func() proto.Message { return &DeviceLoginResponse{} },
+	MessageTypeSyncInform:            func() proto.Message { return &SyncInform{} },
 }
 
 func Factory(messageType MessageType) proto.Message {
@@ -35,3 +44,37 @@ func Factory(messageType MessageType) proto.Message {
 	}
 	return nil
 }
+
+// func MessageTypeFromMessage(message proto.Message) MessageType {
+
+// 	typ := reflect.ValueOf(message).Type()
+// 	log.Println(typ.PkgPath())
+// 	switch typ.Kind() {
+// 	case reflect.ValueOf(WraperMessage{}).Type().Kind():
+// 		{
+// 			return MessageTypeWraper
+// 		}
+// 	case reflect.ValueOf(DeviceRegisteRequest{}).Type().Kind():
+// 		{
+// 			return MessageTypeDeviceRegisteRequest
+// 		}
+// 	case reflect.ValueOf(DeviceRegisteResponse{}).Type().Kind():
+// 		{
+// 			return MessageTypeDeviceRegisteResponse
+// 		}
+// 	case reflect.ValueOf(DeviceLoginRequest{}).Type().Kind():
+// 		{
+// 			return MessageTypeDeviceLoginRequest
+// 		}
+// 	case reflect.ValueOf(DeviceLoginResponse{}).Type().Kind():
+// 		{
+// 			return MessageTypeDeviceLoginResponse
+// 		}
+// 	case reflect.ValueOf(SyncInform{}).Type().Kind():
+// 		{
+// 			return MessageTypeSyncInform
+// 		}
+// 	}
+
+// 	return 0
+// }

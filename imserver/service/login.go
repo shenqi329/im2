@@ -54,7 +54,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 		}
 	}
 
-	sendNofity(c, deviceLoginRequest)
+	sendSyncInform(c, deviceLoginRequest)
 
 	protoMessage = &protocolBean.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
@@ -65,7 +65,8 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 	return
 }
 
-func sendNofity(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) {
+//发送同步通知
+func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -78,11 +79,11 @@ func sendNofity(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogin
 	}
 
 	for _, sessionMap := range sessionMaps {
-		sendNofityWithSessionMap(sessionMap)
+		sendSyncInformWithSessionMap(c, sessionMap)
 	}
 }
 
-func sendNofityWithSessionMap(sessionMap *imServerBean.SessionMap) {
+func sendSyncInformWithSessionMap(c imserver.Context, sessionMap *imServerBean.SessionMap) {
 
 	var messages []*imServerBean.Message
 
@@ -90,11 +91,24 @@ func sendNofityWithSessionMap(sessionMap *imServerBean.SessionMap) {
 		SessionId: sessionMap.SessionId,
 	})
 
-	index, err := dao.MessageMaxIndex(sessionMap.SessionId)
+	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
+
+	if sessionMap.ReadIndex >= latestIndex {
+		log.Println("不需发送同步通知")
+		return
+	}
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(index)
+	log.Println(latestIndex)
+
+	syncInfo := &protocolBean.SyncInform{
+		SessionId:   sessionMap.SessionId,
+		LatestIndex: latestIndex,
+		ReadIndex:   sessionMap.ReadIndex,
+	}
+
+	c.SendProtoMessage(protocolBean.MessageTypeSyncInform, syncInfo)
 }

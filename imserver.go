@@ -26,6 +26,7 @@ func main() {
 
 	s.Handle(protocolBean.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
 	s.Handle(protocolBean.MessageTypeDeviceLoginRequest, controller.HandleLogin)
+	s.Handle(protocolBean.MessageTypeCreateSessionRequest, controller.HandleCreateSession)
 
 	s.Run()
 }

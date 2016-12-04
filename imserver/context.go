@@ -17,7 +17,8 @@ type (
 		UDPAddr() *net.UDPAddr
 		ProtoMessage() proto.Message
 		ConnId() uint64
-		WraperProtoMessage(messageType protocolBean.MessageType, message proto.Message) error
+		NeedWraper() bool
+		SendProtoMessage(messageType protocolBean.MessageType, message proto.Message) error
 	}
 
 	context struct {
@@ -26,8 +27,13 @@ type (
 		udpAddr      *net.UDPAddr
 		protoMessage proto.Message
 		connId       uint64
+		needWraper   bool
 	}
 )
+
+func (c *context) NeedWraper() bool {
+	return c.needWraper
+}
 
 func (c *context) UDPConn() *net.UDPConn {
 	return c.udpConn
@@ -49,7 +55,7 @@ func (c *context) IMServer() *Server {
 	return c.imServer
 }
 
-func (c *context) WraperProtoMessage(messageType protocolBean.MessageType, message proto.Message) error {
+func (c *context) SendProtoMessage(messageType protocolBean.MessageType, message proto.Message) error {
 
 	buffer, err := protocolCoder.EncoderProtoMessage((int)(messageType), message)
 	if err != nil {
@@ -57,16 +63,19 @@ func (c *context) WraperProtoMessage(messageType protocolBean.MessageType, messa
 		return err
 	}
 
-	//包装数据后返回
-	wraperMessage := &protocolBean.WraperMessage{
-		ConnId:  c.ConnId(),
-		Message: buffer,
-	}
+	if c.needWraper {
+		//包装数据后返回
+		log.Println("包装数据")
+		wraperMessage := &protocolBean.WraperMessage{
+			ConnId:  c.ConnId(),
+			Message: buffer,
+		}
 
-	buffer, err = protocolCoder.EncoderProtoMessage(protocolBean.MessageTypeWraper, wraperMessage)
-	if err != nil {
-		log.Println(err)
-		return err
+		buffer, err = protocolCoder.EncoderProtoMessage(protocolBean.MessageTypeWraper, wraperMessage)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
 	}
 
 	count, err := c.UDPConn().WriteTo(buffer, c.udpAddr)

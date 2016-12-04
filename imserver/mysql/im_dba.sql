@@ -27,6 +27,7 @@ create table `t_message`(
     PRIMARY KEY (`t_message_id`)
 )
 
+
 drop table `t_session_map`;
 create table `t_session_map`(
     `t_session_map_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
@@ -35,6 +36,15 @@ create table `t_session_map`(
     `t_session_map_read_index` bigint(20) NOT NULL,
 	PRIMARY KEY (`t_session_map_id`)
 )
+
+drop table `t_session`;
+create table `t_session`(
+    `t_session_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `t_session_app_id` varchar(200) NOT NULL COMMENT '应用id',
+    `t_session_create_user_id` varchar(200) NOT NULL COMMENT '创建用户id',
+	PRIMARY KEY (`t_session_id`)
+)
+
 
 -- drop table `t_user`;
 -- 

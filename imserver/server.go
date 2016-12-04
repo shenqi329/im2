@@ -93,36 +93,36 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte) {
 
 	decoder := coder.NEWDecoder()
-	beanWraperMessages, err := decoder.Decode(msg)
+	messages, err := decoder.Decode(msg)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
 	//处理
-	for _, beanWraperMessage := range beanWraperMessages {
-		if beanWraperMessage.Type != protocolBean.MessageTypeWraper {
-			continue
-		}
+	for _, message := range messages {
+		if message.Type == protocolBean.MessageTypeWraper {
+			wraperMessage := &protocolBean.WraperMessage{}
+			if err := proto.Unmarshal(message.Body, wraperMessage); err != nil {
+				log.Println(err)
+				continue
+			}
 
-		wraperMessage := &protocolBean.WraperMessage{}
-		if err := proto.Unmarshal(beanWraperMessage.Body, wraperMessage); err != nil {
-			log.Println(err)
-			continue
-		}
-
-		decoder.Reset()
-		beanMessages, err := decoder.Decode(wraperMessage.Message)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		for _, beanMessage := range beanMessages {
-			s.handleMessage(conn, remote, beanMessage, wraperMessage.ConnId)
+			decoder.Reset()
+			beanMessages, err := decoder.Decode(wraperMessage.Message)
+			if err != nil {
+				log.Println(err.Error())
+				continue
+			}
+			for _, beanMessage := range beanMessages {
+				s.handleMessage(conn, remote, beanMessage, wraperMessage.ConnId, true)
+			}
+		} else {
+			s.handleMessage(conn, remote, message, 0, false)
 		}
 	}
 }
 
-func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64) {
+func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64, needWraper bool) {
 
 	protoMessage := protocolBean.Factory((protocolBean.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
@@ -136,6 +136,7 @@ func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *co
 		udpAddr:      addr,
 		protoMessage: protoMessage,
 		connId:       connId,
+		needWraper:   needWraper,
 	}
 
 	f := s.handleFuncs[(protocolBean.MessageType)(message.Type)]

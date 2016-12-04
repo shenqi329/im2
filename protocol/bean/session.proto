@@ -1,0 +1,22 @@
+syntax = "proto3";
+package bean;
+
+message Session{
+	uint64 sessionId = 11;
+}
+
+//messageType = 2
+message CreateSessionRequest{
+	uint64 rid = 1;		//流水号
+ 	string appId = 11;	//app唯一标识
+	string createUserId = 12;	//创建用户的唯一标识
+	int32 count = 13;		//创建的个数	
+}
+
+
+message CreateSessionResponse{
+	uint64 rid = 1;		//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
+	repeated Session sessionIds = 11;
+}

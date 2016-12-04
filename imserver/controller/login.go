@@ -19,8 +19,8 @@ func HandleLogin(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
-	return c.WraperProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, tokenBean)
+	return c.SendProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, tokenBean)
 }
