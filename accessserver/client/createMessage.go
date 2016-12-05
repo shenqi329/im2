@@ -50,7 +50,7 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000; i++ {
 		{
 			request := &bean.CreateMessageRequest{
 				Rid:       getRid(),
@@ -64,6 +64,7 @@ func connectToPort() {
 			}
 
 			connect.Write(buffer)
+			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }

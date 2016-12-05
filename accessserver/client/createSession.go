@@ -50,7 +50,7 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 33; i++ {
 		{
 			request := &bean.CreateSessionRequest{
 				Rid:          getRid(),

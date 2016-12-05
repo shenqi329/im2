@@ -16,9 +16,9 @@ import (
 
 func HandleCreateMessage(c imserver.Context, request *protocolBean.CreateMessageRequest) (proto.Message, error) {
 
-	log.Println(imServerBean.StructToJsonString(request))
+	//log.Println(imServerBean.StructToJsonString(request))
 
-	log.Println(request.SessionId)
+	//log.Println(request.SessionId)
 	index, err := dao.MessageMaxIndex(request.SessionId)
 	if err != nil {
 		log.Println(err)
@@ -45,12 +45,12 @@ func HandleCreateMessage(c imserver.Context, request *protocolBean.CreateMessage
 		Code: imServerError.CommonSuccess,
 		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),
 	}
-	xxxxxxxxxxxxxxxxxxx(request.SessionId)
+	go xxxxxxxxxxxxxxxxxxx(c, request.SessionId)
 
 	return response, nil
 }
 
-func xxxxxxxxxxxxxxxxxxx(sessionId int64) {
+func xxxxxxxxxxxxxxxxxxx(c imserver.Context, sessionId int64) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -64,11 +64,11 @@ func xxxxxxxxxxxxxxxxxxx(sessionId int64) {
 	}
 
 	for _, sessionMap := range sessionMaps {
-		xxx(sessionMap)
+		xxx(c, sessionMap)
 	}
 }
 
-func xxx(sessionMap *imServerBean.SessionMap) {
+func xxx(c imserver.Context, sessionMap *imServerBean.SessionMap) {
 
 	var tokens []*imServerBean.Token
 
@@ -82,6 +82,9 @@ func xxx(sessionMap *imServerBean.SessionMap) {
 	}
 
 	for _, token := range tokens {
+		log.Println(token.Id)
+		log.Println(c.TokenConnInfoChan())
+		c.TokenConnInfoChan() <- token.Id
 		//token.Id 根据登录的id去发送
 	}
 }

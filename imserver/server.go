@@ -4,7 +4,7 @@ import (
 	//"errors"
 	"github.com/golang/protobuf/proto"
 	//imResponse "im/imserver/response"
-	//imService "im/imserver/service"
+	//imServiceBean "im/imserver/bean"
 	protocolBean "im/protocol/bean"
 	"im/protocol/coder"
 	"log"
@@ -21,12 +21,18 @@ type Request struct {
 
 type ConnInfo struct {
 	IsLogin bool
+	UdpConn *net.UDPConn
+	UdpAddr *net.UDPAddr
+	ConnId  uint64
+	Token   int64
+	UserId  string
 }
 
 type Server struct {
 	localUdpAddr string
 	handleFuncs  map[protocolBean.MessageType]func(c Context) error
 	connInfos    map[uint64]*ConnInfo //connId
+	tokenInfos   map[int64]*ConnInfo
 }
 
 func NEWServer(localUdpAddr string) *Server {
@@ -34,6 +40,7 @@ func NEWServer(localUdpAddr string) *Server {
 		localUdpAddr: localUdpAddr,
 		handleFuncs:  make(map[protocolBean.MessageType]func(c Context) error),
 		connInfos:    make(map[uint64]*ConnInfo),
+		tokenInfos:   make(map[int64]*ConnInfo),
 	}
 }
 
@@ -76,7 +83,10 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 	log.Println("net.ListenUDP", addr)
 
 	var recvAndSendCount uint32 = 0
-
+	connInfoChan := make(chan *ConnInfo, 1000)
+	tokenConnInfoChan := make(chan int64, 1000)
+	log.Println(connInfoChan, tokenConnInfoChan)
+	go s.syncData(tokenConnInfoChan, connInfoChan)
 	for true {
 		buf := make([]byte, 1024)
 		rlen, remote, err := conn.ReadFromUDP(buf)
@@ -86,11 +96,35 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 		}
 		recvAndSendCount++
 		log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
-		go s.processHandler(conn, remote, buf[:rlen])
+		go s.processHandler(tokenConnInfoChan, connInfoChan, conn, remote, buf[:rlen])
 	}
 }
 
-func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []byte) {
+func (s *Server) syncData(tokenConnInfoChan <-chan int64, connInfoChan <-chan *ConnInfo) {
+	for {
+		select {
+		case connInfo := <-connInfoChan:
+			{
+				log.Println("UserId", connInfo.UserId, "token", connInfo.Token)
+				s.connInfos[connInfo.ConnId] = connInfo
+				s.tokenInfos[connInfo.Token] = connInfo
+			}
+		case tokenId := <-tokenConnInfoChan:
+			{
+				log.Println(tokenId)
+				connInfo := s.tokenInfos[tokenId]
+				if connInfo != nil {
+					SendSyncInform(connInfo.UdpAddr, connInfo.UdpConn, connInfo.ConnId, connInfo.UserId)
+					log.Println("UserId", connInfo.UserId, "token", connInfo.Token)
+				}
+			}
+
+		}
+	}
+
+}
+
+func (s *Server) processHandler(tokenConnInfoChan chan<- int64, connInfoChan chan<- *ConnInfo, conn *net.UDPConn, remote *net.UDPAddr, msg []byte) {
 
 	decoder := coder.NEWDecoder()
 	messages, err := decoder.Decode(msg)
@@ -114,15 +148,15 @@ func (s *Server) processHandler(conn *net.UDPConn, remote *net.UDPAddr, msg []by
 				continue
 			}
 			for _, beanMessage := range beanMessages {
-				s.handleMessage(conn, remote, beanMessage, wraperMessage.ConnId, true)
+				s.handleMessage(tokenConnInfoChan, connInfoChan, conn, remote, beanMessage, wraperMessage.ConnId, true)
 			}
 		} else {
-			s.handleMessage(conn, remote, message, 0, false)
+			s.handleMessage(tokenConnInfoChan, connInfoChan, conn, remote, message, 0, false)
 		}
 	}
 }
 
-func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64, needWraper bool) {
+func (s *Server) handleMessage(tokenConnInfoChan chan<- int64, connInfoChan chan<- *ConnInfo, conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64, needWraper bool) {
 
 	protoMessage := protocolBean.Factory((protocolBean.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
@@ -131,12 +165,14 @@ func (s *Server) handleMessage(conn *net.UDPConn, addr *net.UDPAddr, message *co
 	}
 
 	c := &context{
-		imServer:     s,
-		udpConn:      conn,
-		udpAddr:      addr,
-		protoMessage: protoMessage,
-		connId:       connId,
-		needWraper:   needWraper,
+		imServer:          s,
+		udpConn:           conn,
+		udpAddr:           addr,
+		protoMessage:      protoMessage,
+		connId:            connId,
+		needWraper:        needWraper,
+		connInfoChan:      connInfoChan,
+		tokenConnInfoChan: tokenConnInfoChan,
 	}
 
 	f := s.handleFuncs[(protocolBean.MessageType)(message.Type)]

@@ -47,12 +47,28 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 	}
 
 	//将连接设置为登录状态
-	connInfo := c.IMServer().GetConnInfo(c.ConnId())
-	if connInfo != nil {
-		if !connInfo.IsLogin {
-			connInfo.IsLogin = true
-		}
+	// connInfo := c.IMServer().GetConnInfo(c.ConnId())
+	// if connInfo != nil {
+	// 	if !connInfo.IsLogin {
+	// 		connInfo.IsLogin = true
+	// 	}
+	// 	connInfo.UdpAddr = c.UDPAddr()
+	// 	connInfo.UdpConn = c.UDPConn()
+	// 	connInfo.ConnId = c.ConnId()
+	// 	connInfo.Token = tokenBean.Id
+	// 	connInfo.UserId = tokenBean.UserId
+	// }
+
+	connInfo := &imserver.ConnInfo{
+		IsLogin: true,
+		UdpAddr: c.UDPAddr(),
+		UdpConn: c.UDPConn(),
+		ConnId:  c.ConnId(),
+		Token:   tokenBean.Id,
+		UserId:  tokenBean.UserId,
 	}
+
+	c.ConnInfoChan() <- connInfo
 
 	go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
 
@@ -94,7 +110,7 @@ func sendSyncInformWithSessionMap(c imserver.Context, sessionMap *imServerBean.S
 	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
 
 	if sessionMap.ReadIndex >= latestIndex {
-		log.Println("不需发送同步通知")
+		//log.Println("不需发送同步通知")
 		return
 	}
 
