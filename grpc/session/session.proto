@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "IM.Session";
+option java_outer_classname = "SessionProto";
+
+package session;
+
+// The greeting service definition.
+service Session {
+  // Sends a greeting
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionReply) {}
+}
+
+message SessionInfo{
+	uint64 sessionId = 11;
+}
+
+message CreateSessionRequest{
+	uint64 rid = 1;		//流水号
+ 	string appId = 11;	//app唯一标识
+	string createUserId = 12;	//创建用户的唯一标识
+	int32 count = 13;		//创建的个数	
+}
+
+
+message CreateSessionReply{
+	uint64 rid = 1;		//流水号
+	string code = 2;	//回应的响应码
+	string desc = 3;	//回应码的描述
+	repeated SessionInfo sessionIds = 11;
+}
