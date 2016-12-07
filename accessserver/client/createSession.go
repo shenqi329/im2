@@ -2,8 +2,9 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
+	grpcSession "im/grpc/session"
 	imserverBean "im/imserver/bean"
-	"im/protocol/bean"
+	"im/protocol/client"
 	"im/protocol/coder"
 	"log"
 	"net"
@@ -50,32 +51,57 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 33; i++ {
+	for i := 0; i < 1; i++ {
 		{
-			request := &bean.CreateSessionRequest{
+			pb := &grpcSession.CreateSessionRequest{
 				Rid:          getRid(),
 				AppId:        "89897",
 				CreateUserId: "1",
 				Count:        1,
 			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeCreateSessionRequest, request)
+			protoBuf, err := proto.Marshal(pb)
+
+			request := &client.RpcRequest{
+				Rid:         getRid(),
+				AppId:       "89897",
+				MessageType: 1,
+				ProtoBuf:    protoBuf,
+			}
+			buffer, err := coder.EncoderProtoMessage(client.MessageTypeRPCRequest, request)
 			if err != nil {
 				log.Println(err.Error())
 			}
 
-			// wraper := &bean.WraperMessage{
-			// 	ConnId:  1,
-			// 	Message: buffer,
-			// }
-
-			// buffer, err = coder.EncoderProtoMessage(bean.MessageTypeWraper, wraper)
-			// if err != nil {
-			// 	log.Println(err.Error())
-			// }
-
 			connect.Write(buffer)
 		}
 	}
+
+	// for i := 0; i < 33; i++ {
+	// 	{
+	// 		request := &bean.CreateSessionRequest{
+	// 			Rid:          getRid(),
+	// 			AppId:        "89897",
+	// 			CreateUserId: "1",
+	// 			Count:        1,
+	// 		}
+	// 		buffer, err := coder.EncoderProtoMessage(bean.MessageTypeCreateSessionRequest, request)
+	// 		if err != nil {
+	// 			log.Println(err.Error())
+	// 		}
+
+	// 		// wraper := &bean.WraperMessage{
+	// 		// 	ConnId:  1,
+	// 		// 	Message: buffer,
+	// 		// }
+
+	// 		// buffer, err = coder.EncoderProtoMessage(bean.MessageTypeWraper, wraper)
+	// 		// if err != nil {
+	// 		// 	log.Println(err.Error())
+	// 		// }
+
+	// 		connect.Write(buffer)
+	// 	}
+	// }
 }
 
 func handleConnection(conn *net.UDPConn) {
@@ -102,7 +128,7 @@ func handleConnection(conn *net.UDPConn) {
 
 func handleMessage(conn *net.UDPConn, message *coder.Message) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+	protoMessage := client.Factory((client.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")

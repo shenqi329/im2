@@ -103,6 +103,10 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 	}
 
 	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Printf(err.Error())
+		os.Exit(1)
+	}
 	defer conn.Close()
 
 	if err != nil {

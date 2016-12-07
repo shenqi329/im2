@@ -14,7 +14,6 @@ const (
 	MessageTypeSyncInform            = 5
 	MessageTypeRPCRequest            = 6
 	MessageTypeRPCResponse           = 7
-
 	MessageTypeCreateSessionRequest  = 8
 	MessageTypeCreateSessionResponse = 9
 	MessageTypeCreateMessageRequest  = 10
@@ -22,16 +21,17 @@ const (
 )
 
 var kinds = map[MessageType]func() proto.Message{
-	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
-	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
-	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
-	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
-
 	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
 	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },
 	MessageTypeDeviceLoginRequest:    func() proto.Message { return &DeviceLoginRequest{} },
 	MessageTypeDeviceLoginResponse:   func() proto.Message { return &DeviceLoginResponse{} },
 	MessageTypeSyncInform:            func() proto.Message { return &SyncInform{} },
+	MessageTypeRPCRequest:            func() proto.Message { return &RpcRequest{} },
+	MessageTypeRPCResponse:           func() proto.Message { return &RpcResponse{} },
+	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
+	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
+	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
+	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
 }
 
 func Factory(messageType MessageType) proto.Message {

@@ -15,7 +15,7 @@ service Rpc {
 
 message RpcRequest {
 	uint64 rid = 1;			//流水号
-	int32 appId = 11;		//app唯一标识
+	string appId = 11;		//app唯一标识
 	int32 messageType = 12;	//消息类型
 	bytes protoBuf = 13;	//消息对应的protoBuf数据
 }
