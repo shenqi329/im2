@@ -2,6 +2,10 @@ package imserver
 
 import (
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	grpcMessage "im/grpc/message"
+	imserverGrpc "im/imserver/grpc"
 	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
 	protocolServer "im/protocol/server"
@@ -46,6 +50,9 @@ func (s *Server) Handle(messageType protocolClient.MessageType, handle func(c Co
 }
 
 func (s *Server) Run() {
+
+	go s.grpcServerRegister(":6005")
+
 	s.listenOnUdpPort(s.localUdpAddr)
 }
 
@@ -58,6 +65,32 @@ func (s *Server) GetConnInfo(connId uint64) *ConnInfo {
 		s.connInfos[connId] = connInfo
 	}
 	return connInfo
+}
+
+func (s *Server) grpcServerRegister(tcpAddr string) {
+
+	clientConn := s.grpcConnToEasyNoteAddr("localhost:6006")
+
+	lis, err := net.Listen("tcp", tcpAddr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+
+	grpcMessage.RegisterMessageServer(grpcServer, &imserverGrpc.Message{ClientConn: clientConn})
+	// Register reflection service on gRPC server.
+	reflection.Register(grpcServer)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func (s *Server) grpcConnToEasyNoteAddr(grpcAddr string) *grpc.ClientConn {
+	conn, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	return conn
 }
 
 func (s *Server) listenOnUdpPort(localUdpAddr string) {

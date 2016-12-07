@@ -10,6 +10,7 @@ It is generated from these files:
 	login.proto
 	message.proto
 	registe.proto
+	rpc.proto
 	session.proto
 	syncInform.proto
 
@@ -21,6 +22,8 @@ It has these top-level messages:
 	CreateMessageResponse
 	DeviceRegisteRequest
 	DeviceRegisteResponse
+	RpcRequest
+	RpcResponse
 	Session
 	CreateSessionRequest
 	CreateSessionResponse

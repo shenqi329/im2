@@ -1,7 +1,6 @@
 syntax = "proto3";
 package client;
 
-//messageType = 13
 message DeviceLoginRequest {
 	uint64 rid = 1;			//流水号
 	string token = 11;		//im系统的token

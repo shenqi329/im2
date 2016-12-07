@@ -13,7 +13,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// messageType = 13
 type DeviceLoginRequest struct {
 	Rid      uint64 `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
 	Token    string `protobuf:"bytes,11,opt,name=token" json:"token,omitempty"`
