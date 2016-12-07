@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	"im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"im/protocol/coder"
 	"log"
 	"net"
@@ -69,20 +69,20 @@ func connectToPort() {
 		// }
 		// time.Sleep(1 * time.Millisecond)
 		if runtime.GOOS == "windows" {
-			loginRequest := &bean.DeviceLoginRequest{
+			loginRequest := &protocolClient.DeviceLoginRequest{
 				Rid:      getRid(),
 				Token:    "1",
 				AppId:    "89897",
 				DeviceId: "024b36dc22425556bc01605d438f4d0c",
 				Platform: "windows",
 			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeDeviceLoginRequest, loginRequest)
 			if err != nil {
 				log.Println(err.Error())
 			}
 			connect.Write(buffer)
 		} else {
-			loginRequest := &bean.DeviceLoginRequest{
+			loginRequest := &protocolClient.DeviceLoginRequest{
 				Rid:      getRid(),
 				Token:    "1",
 				AppId:    "89897",
@@ -90,7 +90,7 @@ func connectToPort() {
 				Platform: "windows",
 			}
 
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeDeviceLoginRequest, loginRequest)
+			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeDeviceLoginRequest, loginRequest)
 			if err != nil {
 				log.Println(err.Error())
 			}
@@ -124,7 +124,7 @@ func handleConnection(conn *net.TCPConn) {
 
 func handleMessage(conn *net.TCPConn, message *coder.Message) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")

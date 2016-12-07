@@ -2,13 +2,13 @@ package accessserver
 
 import (
 	"github.com/golang/protobuf/proto"
-	bean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 )
 
 func Handle(context Context) error {
-	protoMessage := bean.Factory((bean.MessageType)(context.Message().Type))
-	requestBean := &bean.DeviceRegisteRequest{}
+	protoMessage := protocolClient.Factory((protocolClient.MessageType)(context.Message().Type))
+	requestBean := &protocolClient.DeviceRegisteRequest{}
 	proto.Unmarshal(context.Message().Body, requestBean)
 
 	if protoMessage == nil {

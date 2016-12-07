@@ -1,5 +1,5 @@
 syntax = "proto3";
-package bean;
+package client;
 
 message Session{
 	uint64 sessionId = 11;

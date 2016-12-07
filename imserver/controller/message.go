@@ -3,13 +3,13 @@ package controller
 import (
 	"im/imserver"
 	"im/imserver/service"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 )
 
 func HandleCreateMessage(c imserver.Context) error {
 
-	request, ok := c.ProtoMessage().(*protocolBean.CreateMessageRequest)
+	request, ok := c.ProtoMessage().(*protocolClient.CreateMessageRequest)
 
 	if !ok {
 		return nil
@@ -19,8 +19,8 @@ func HandleCreateMessage(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.SendProtoMessage(protocolBean.MessageTypeCreateMessageResponse, imserver.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolClient.MessageTypeCreateMessageResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
-	return c.SendProtoMessage(protocolBean.MessageTypeCreateMessageResponse, tokenBean)
+	return c.SendProtoMessage(protocolClient.MessageTypeCreateMessageResponse, tokenBean)
 }

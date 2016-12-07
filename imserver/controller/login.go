@@ -3,13 +3,13 @@ package controller
 import (
 	"im/imserver"
 	"im/imserver/service"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 )
 
 func HandleLogin(c imserver.Context) error {
 
-	request, ok := c.ProtoMessage().(*protocolBean.DeviceLoginRequest)
+	request, ok := c.ProtoMessage().(*protocolClient.DeviceLoginRequest)
 
 	if !ok {
 		return nil
@@ -19,8 +19,8 @@ func HandleLogin(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.SendProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
-	return c.SendProtoMessage(protocolBean.MessageTypeDeviceRegisteResponse, tokenBean)
+	return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, tokenBean)
 }

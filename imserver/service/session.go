@@ -7,14 +7,14 @@ import (
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
 	// imServerResponse "im/imserver/response"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 	// "net/http"
 	// "strconv"
 	// "time"
 )
 
-func HandleCreateSession(request *protocolBean.CreateSessionRequest) (proto.Message, error) {
+func HandleCreateSession(request *protocolClient.CreateSessionRequest) (proto.Message, error) {
 
 	log.Println(imServerBean.StructToJsonString(request))
 
@@ -47,15 +47,15 @@ func HandleCreateSession(request *protocolBean.CreateSessionRequest) (proto.Mess
 		}
 	}
 
-	sessionIds := make([]*protocolBean.Session, request.Count)
+	sessionIds := make([]*protocolClient.Session, request.Count)
 	for i := 0; i < (int)(request.Count); i++ {
 		log.Print(sessions[i].Id)
-		sessionIds[i] = &protocolBean.Session{
+		sessionIds[i] = &protocolClient.Session{
 			SessionId: (uint64)(sessions[i].Id),
 		}
 	}
 
-	response := &protocolBean.CreateSessionResponse{
+	response := &protocolClient.CreateSessionResponse{
 		Rid:        (uint64)(request.Rid),
 		Code:       imServerError.CommonSuccess,
 		Desc:       imServerError.ErrorCodeToText(imServerError.CommonSuccess),

@@ -3,13 +3,13 @@ package controller
 import (
 	"im/imserver"
 	"im/imserver/service"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 )
 
 func HandleCreateSession(c imserver.Context) error {
 
-	request, ok := c.ProtoMessage().(*protocolBean.CreateSessionRequest)
+	request, ok := c.ProtoMessage().(*protocolClient.CreateSessionRequest)
 
 	if !ok {
 		return nil
@@ -19,8 +19,8 @@ func HandleCreateSession(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.SendProtoMessage(protocolBean.MessageTypeCreateSessionResponse, imserver.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolClient.MessageTypeCreateSessionResponse, imserver.NewCommonResponseWithError(err, request.Rid))
 	}
 
-	return c.SendProtoMessage(protocolBean.MessageTypeCreateSessionResponse, tokenBean)
+	return c.SendProtoMessage(protocolClient.MessageTypeCreateSessionResponse, tokenBean)
 }

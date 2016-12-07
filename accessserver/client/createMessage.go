@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/golang/protobuf/proto"
 	imserverBean "im/imserver/bean"
-	"im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"im/protocol/coder"
 	"log"
 	"net"
@@ -50,15 +50,15 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1; i++ {
 		{
-			request := &bean.CreateMessageRequest{
+			request := &protocolClient.CreateMessageRequest{
 				Rid:       getRid(),
 				SessionId: 32,
 				Type:      1,
 				Content:   "a message from push",
 			}
-			buffer, err := coder.EncoderProtoMessage(bean.MessageTypeCreateMessageRequest, request)
+			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeCreateMessageRequest, request)
 			if err != nil {
 				log.Println(err.Error())
 			}
@@ -93,7 +93,7 @@ func handleConnection(conn *net.UDPConn) {
 
 func handleMessage(conn *net.UDPConn, message *coder.Message) {
 
-	protoMessage := bean.Factory((bean.MessageType)(message.Type))
+	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")

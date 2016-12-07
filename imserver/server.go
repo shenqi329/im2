@@ -1,16 +1,13 @@
 package imserver
 
 import (
-	//"errors"
 	"github.com/golang/protobuf/proto"
-	//imResponse "im/imserver/response"
-	//imServiceBean "im/imserver/bean"
-	protocolBean "im/protocol/bean"
-	"im/protocol/coder"
+	protocolClient "im/protocol/client"
+	coder "im/protocol/coder"
+	protocolServer "im/protocol/server"
 	"log"
 	"net"
 	"os"
-	//"reflect"
 )
 
 type Request struct {
@@ -30,7 +27,7 @@ type ConnInfo struct {
 
 type Server struct {
 	localUdpAddr string
-	handleFuncs  map[protocolBean.MessageType]func(c Context) error
+	handleFuncs  map[protocolClient.MessageType]func(c Context) error
 	connInfos    map[uint64]*ConnInfo //connId
 	tokenInfos   map[int64]*ConnInfo
 }
@@ -38,13 +35,13 @@ type Server struct {
 func NEWServer(localUdpAddr string) *Server {
 	return &Server{
 		localUdpAddr: localUdpAddr,
-		handleFuncs:  make(map[protocolBean.MessageType]func(c Context) error),
+		handleFuncs:  make(map[protocolClient.MessageType]func(c Context) error),
 		connInfos:    make(map[uint64]*ConnInfo),
 		tokenInfos:   make(map[int64]*ConnInfo),
 	}
 }
 
-func (s *Server) Handle(messageType protocolBean.MessageType, handle func(c Context) error) {
+func (s *Server) Handle(messageType protocolClient.MessageType, handle func(c Context) error) {
 	s.handleFuncs[messageType] = handle
 }
 
@@ -85,7 +82,6 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 	var recvAndSendCount uint32 = 0
 	connInfoChan := make(chan *ConnInfo, 1000)
 	tokenConnInfoChan := make(chan int64, 1000)
-	log.Println(connInfoChan, tokenConnInfoChan)
 	go s.syncData(tokenConnInfoChan, connInfoChan)
 	for true {
 		buf := make([]byte, 1024)
@@ -134,8 +130,8 @@ func (s *Server) processHandler(tokenConnInfoChan chan<- int64, connInfoChan cha
 	}
 	//处理
 	for _, message := range messages {
-		if message.Type == protocolBean.MessageTypeWraper {
-			wraperMessage := &protocolBean.WraperMessage{}
+		if message.Type == protocolServer.MessageTypeWraper {
+			wraperMessage := &protocolServer.WraperMessage{}
 			if err := proto.Unmarshal(message.Body, wraperMessage); err != nil {
 				log.Println(err)
 				continue
@@ -158,7 +154,7 @@ func (s *Server) processHandler(tokenConnInfoChan chan<- int64, connInfoChan cha
 
 func (s *Server) handleMessage(tokenConnInfoChan chan<- int64, connInfoChan chan<- *ConnInfo, conn *net.UDPConn, addr *net.UDPAddr, message *coder.Message, connId uint64, needWraper bool) {
 
-	protoMessage := protocolBean.Factory((protocolBean.MessageType)(message.Type))
+	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
 	if err := proto.Unmarshal(message.Body, protoMessage); err != nil {
 		log.Println(err.Error())
 		return
@@ -175,7 +171,7 @@ func (s *Server) handleMessage(tokenConnInfoChan chan<- int64, connInfoChan chan
 		tokenConnInfoChan: tokenConnInfoChan,
 	}
 
-	f := s.handleFuncs[(protocolBean.MessageType)(message.Type)]
+	f := s.handleFuncs[(protocolClient.MessageType)(message.Type)]
 	if f == nil {
 		log.Println("不处理")
 		return

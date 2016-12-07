@@ -7,14 +7,14 @@ import (
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 	// "net/http"
 	// "strconv"
 	"time"
 )
 
-func HandleCreateMessage(c imserver.Context, request *protocolBean.CreateMessageRequest) (proto.Message, error) {
+func HandleCreateMessage(c imserver.Context, request *protocolClient.CreateMessageRequest) (proto.Message, error) {
 
 	//log.Println(imServerBean.StructToJsonString(request))
 
@@ -40,7 +40,7 @@ func HandleCreateMessage(c imserver.Context, request *protocolBean.CreateMessage
 		return nil, imServerError.ErrorInternalServerError
 	}
 
-	response := &protocolBean.CreateMessageResponse{
+	response := &protocolClient.CreateMessageResponse{
 		Rid:  (uint64)(request.Rid),
 		Code: imServerError.CommonSuccess,
 		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),

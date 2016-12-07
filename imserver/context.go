@@ -6,8 +6,9 @@ import (
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imError "im/imserver/error"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	protocolCoder "im/protocol/coder"
+	protocolServer "im/protocol/server"
 	"log"
 	"net"
 )
@@ -20,7 +21,7 @@ type (
 		ProtoMessage() proto.Message
 		ConnId() uint64
 		NeedWraper() bool
-		SendProtoMessage(messageType protocolBean.MessageType, message proto.Message) error
+		SendProtoMessage(messageType protocolClient.MessageType, message proto.Message) error
 		ConnInfoChan() chan<- *ConnInfo
 		TokenConnInfoChan() chan<- int64
 	}
@@ -68,7 +69,7 @@ func (c *context) IMServer() *Server {
 	return c.imServer
 }
 
-func (c *context) SendProtoMessage(messageType protocolBean.MessageType, message proto.Message) error {
+func (c *context) SendProtoMessage(messageType protocolClient.MessageType, message proto.Message) error {
 
 	buffer, err := protocolCoder.EncoderProtoMessage((int)(messageType), message)
 	if err != nil {
@@ -79,12 +80,12 @@ func (c *context) SendProtoMessage(messageType protocolBean.MessageType, message
 	if c.needWraper {
 		//包装数据后返回
 		//log.Println("包装数据")
-		wraperMessage := &protocolBean.WraperMessage{
+		wraperMessage := &protocolServer.WraperMessage{
 			ConnId:  c.ConnId(),
 			Message: buffer,
 		}
 
-		buffer, err = protocolCoder.EncoderProtoMessage(protocolBean.MessageTypeWraper, wraperMessage)
+		buffer, err = protocolCoder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -101,11 +102,11 @@ func (c *context) SendProtoMessage(messageType protocolBean.MessageType, message
 	return nil
 }
 
-func NewCommonResponseWithError(err error, rid uint64) *protocolBean.CommonResponse {
+func NewCommonResponseWithError(err error, rid uint64) *protocolClient.CommonResponse {
 
 	imErr, ok := err.(*imError.IMError)
 	if ok {
-		response := &protocolBean.CommonResponse{
+		response := &protocolClient.CommonResponse{
 			Rid:  rid,
 			Code: imErr.Code,
 			Desc: imErr.Desc,
@@ -113,7 +114,7 @@ func NewCommonResponseWithError(err error, rid uint64) *protocolBean.CommonRespo
 		return response
 	}
 
-	response := &protocolBean.CommonResponse{
+	response := &protocolClient.CommonResponse{
 		Rid:  rid,
 		Code: imError.CommonInternalServerError,
 		Desc: imError.ErrorCodeToText(imError.CommonInternalServerError),
@@ -160,16 +161,16 @@ func SendSyncInformWithSessionMap(udpAddr *net.UDPAddr, udpConn *net.UDPConn, se
 	}
 	log.Println(latestIndex)
 
-	syncInfo := &protocolBean.SyncInform{
+	syncInfo := &protocolClient.SyncInform{
 		SessionId:   sessionMap.SessionId,
 		LatestIndex: latestIndex,
 		ReadIndex:   sessionMap.ReadIndex,
 	}
 
-	SendProtoMessage(udpAddr, udpConn, protocolBean.MessageTypeSyncInform, syncInfo, connId, true)
+	SendProtoMessage(udpAddr, udpConn, protocolClient.MessageTypeSyncInform, syncInfo, connId, true)
 }
 
-func SendProtoMessage(udpAddr *net.UDPAddr, udpConn *net.UDPConn, messageType protocolBean.MessageType, message proto.Message, connId uint64, needWraper bool) error {
+func SendProtoMessage(udpAddr *net.UDPAddr, udpConn *net.UDPConn, messageType protocolClient.MessageType, message proto.Message, connId uint64, needWraper bool) error {
 
 	buffer, err := protocolCoder.EncoderProtoMessage((int)(messageType), message)
 	if err != nil {
@@ -180,12 +181,12 @@ func SendProtoMessage(udpAddr *net.UDPAddr, udpConn *net.UDPConn, messageType pr
 	if needWraper {
 		//包装数据后返回
 		//log.Println("包装数据")
-		wraperMessage := &protocolBean.WraperMessage{
+		wraperMessage := &protocolServer.WraperMessage{
 			ConnId:  connId,
 			Message: buffer,
 		}
 
-		buffer, err = protocolCoder.EncoderProtoMessage(protocolBean.MessageTypeWraper, wraperMessage)
+		buffer, err = protocolCoder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
 		if err != nil {
 			log.Println(err)
 			return err

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package bean;
+package client;
 
 message CreateMessageRequest{
 	uint64 rid = 1;			//流水号

@@ -6,13 +6,13 @@ import (
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 	"strconv"
 	"time"
 )
 
-func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest) (protoMessage proto.Message, err error) {
+func HandleLogin(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage proto.Message, err error) {
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
@@ -25,7 +25,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 	has, err := dao.NewDao().Get(tokenBean)
 
 	if err != nil {
-		protoMessage = &protocolBean.DeviceLoginResponse{
+		protoMessage = &protocolClient.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
 			Code: imServerError.CommonInternalServerError,
 			Desc: imServerError.ErrorCodeToText(imServerError.CommonInternalServerError),
@@ -33,7 +33,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 		return
 	}
 	if !has {
-		protoMessage = &protocolBean.DeviceLoginResponse{
+		protoMessage = &protocolClient.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
 			Code: imServerError.CommonResourceNoExist,
 			Desc: imServerError.ErrorCodeToText(imServerError.CommonResourceNoExist),
@@ -72,7 +72,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 
 	go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
 
-	protoMessage = &protocolBean.DeviceLoginResponse{
+	protoMessage = &protocolClient.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
 		Code: imServerError.CommonSuccess,
 		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),
@@ -82,7 +82,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLogi
 }
 
 //发送同步通知
-func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolBean.DeviceLoginRequest, userId string) {
+func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -120,11 +120,11 @@ func sendSyncInformWithSessionMap(c imserver.Context, sessionMap *imServerBean.S
 	}
 	log.Println(latestIndex)
 
-	syncInfo := &protocolBean.SyncInform{
+	syncInfo := &protocolClient.SyncInform{
 		SessionId:   sessionMap.SessionId,
 		LatestIndex: latestIndex,
 		ReadIndex:   sessionMap.ReadIndex,
 	}
 
-	c.SendProtoMessage(protocolBean.MessageTypeSyncInform, syncInfo)
+	c.SendProtoMessage(protocolClient.MessageTypeSyncInform, syncInfo)
 }

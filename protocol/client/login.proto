@@ -1,5 +1,5 @@
 syntax = "proto3";
-package bean;
+package client;
 
 //messageType = 13
 message DeviceLoginRequest {

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package bean;
+package client;
 
 //作为通用回应,messageType根据请求的情况而定
 message CommonResponse{

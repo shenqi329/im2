@@ -2,8 +2,8 @@ package accessserver
 
 import (
 	"github.com/golang/protobuf/proto"
-	bean "im/protocol/bean"
 	coder "im/protocol/coder"
+	protocolServer "im/protocol/server"
 	"log"
 	"net"
 	"os"
@@ -139,12 +139,12 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 					}
 					connMap[req.connId] = connInfo
 				}
-				wraperMessage := &bean.WraperMessage{
+				wraperMessage := &protocolServer.WraperMessage{
 					ConnId:    (uint64)(req.connId),
 					Message:   req.reqPkg,
 					IsLoginIn: connInfo.isLogin,
 				}
-				reqPkg, err := coder.EncoderProtoMessage(bean.MessageTypeWraper, wraperMessage)
+				reqPkg, err := coder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
 				if err != nil {
 					log.Println(err)
 					req.conn.Close()
@@ -162,10 +162,10 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 				return
 			}
 			for _, beanWraperMessage := range beanWraperMessages {
-				if beanWraperMessage.Type != bean.MessageTypeWraper {
+				if beanWraperMessage.Type != protocolServer.MessageTypeWraper {
 					continue
 				}
-				protoWraperMessage := &bean.WraperMessage{}
+				protoWraperMessage := &protocolServer.WraperMessage{}
 				err := proto.Unmarshal(beanWraperMessage.Body, protoWraperMessage)
 				if err != nil {
 					log.Println(err)

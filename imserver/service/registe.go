@@ -7,14 +7,14 @@ import (
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
 	imServerResponse "im/imserver/response"
-	protocolBean "im/protocol/bean"
+	protocolClient "im/protocol/client"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) error {
+func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) error {
 
 	if err := CheckDeviceId(deviceRegisteRequest.DeviceId); err != nil {
 		return err
@@ -27,7 +27,7 @@ func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolBean.DeviceRegisteRe
 	return nil
 }
 
-func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (protoMessage proto.Message, err error) {
+func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (protoMessage proto.Message, err error) {
 
 	if err = CheckDeviceRegistReqeust(deviceRegisteRequest); err != nil {
 		return
@@ -77,7 +77,7 @@ func HandleRegiste(deviceRegisteRequest *protocolBean.DeviceRegisteRequest) (pro
 		return
 	}
 
-	protoMessage = &protocolBean.DeviceRegisteResponse{
+	protoMessage = &protocolClient.DeviceRegisteResponse{
 		Rid:   deviceRegisteRequest.Rid,
 		Code:  imServerError.CommonSuccess,
 		Desc:  imServerError.ErrorCodeToText(imServerError.CommonSuccess),
