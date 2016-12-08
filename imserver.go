@@ -26,8 +26,6 @@ func main() {
 
 	s.Handle(protocolClient.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
 	s.Handle(protocolClient.MessageTypeDeviceLoginRequest, controller.HandleLogin)
-	s.Handle(protocolClient.MessageTypeCreateSessionRequest, controller.HandleCreateSession)
-	s.Handle(protocolClient.MessageTypeCreateMessageRequest, controller.HandleCreateMessage)
 	s.Handle(protocolClient.MessageTypeRPCRequest, controller.HandleRpc)
 
 	s.Run()

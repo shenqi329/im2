@@ -1,26 +1,26 @@
 package controller
 
-import (
-	"im/imserver"
-	"im/imserver/service"
-	protocolClient "im/protocol/client"
-	"log"
-)
+// import (
+// 	grpcPb "im/grpc/pb"
+// 	"im/imserver"
+// 	"im/imserver/service"
+// 	"log"
+// )
 
-func HandleCreateMessage(c imserver.Context) error {
+// func HandleCreateMessage(c imserver.Context) error {
 
-	request, ok := c.ProtoMessage().(*protocolClient.CreateMessageRequest)
+// 	request, ok := c.ProtoMessage().(*grpcPb.CreateMessageRequest)
 
-	if !ok {
-		return nil
-	}
+// 	if !ok {
+// 		return nil
+// 	}
 
-	tokenBean, err := service.HandleCreateMessage(c, request)
+// 	tokenBean, err := service.HandleCreateMessage(c, request)
 
-	if err != nil {
-		log.Println(err)
-		return c.SendProtoMessage(protocolClient.MessageTypeCreateMessageResponse, imserver.NewCommonResponseWithError(err, request.Rid))
-	}
+// 	if err != nil {
+// 		log.Println(err)
+// 		return c.SendProtoMessage(grpcPb.MessageTypeCreateMessageReply, imserver.NewCommonResponseWithError(err, request.Rid))
+// 	}
 
-	return c.SendProtoMessage(protocolClient.MessageTypeCreateMessageResponse, tokenBean)
-}
+// 	return c.SendProtoMessage(grpcPb.MessageTypeCreateMessageReply, tokenBean)
+// }

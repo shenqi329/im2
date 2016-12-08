@@ -1,22 +1,17 @@
 package service
 
 import (
-	// "encoding/json"
-	"github.com/golang/protobuf/proto"
+	//"github.com/golang/protobuf/proto"
+	grpcPb "im/grpc/pb"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	// imServerResponse "im/imserver/response"
-	protocolClient "im/protocol/client"
 	"log"
-	// "net/http"
-	// "strconv"
-	// "time"
 )
 
-func HandleCreateSession(request *protocolClient.CreateSessionRequest) (proto.Message, error) {
+func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
 
-	log.Println(imServerBean.StructToJsonString(request))
+	log.Println(request.String())
 
 	if request.Count > 10 ||
 		request.Count <= 0 {
@@ -47,15 +42,15 @@ func HandleCreateSession(request *protocolClient.CreateSessionRequest) (proto.Me
 		}
 	}
 
-	sessionIds := make([]*protocolClient.Session, request.Count)
+	sessionIds := make([]*grpcPb.SessionInfo, request.Count)
 	for i := 0; i < (int)(request.Count); i++ {
 		log.Print(sessions[i].Id)
-		sessionIds[i] = &protocolClient.Session{
+		sessionIds[i] = &grpcPb.SessionInfo{
 			SessionId: (uint64)(sessions[i].Id),
 		}
 	}
 
-	response := &protocolClient.CreateSessionResponse{
+	response := &grpcPb.CreateSessionReply{
 		Rid:        (uint64)(request.Rid),
 		Code:       imServerError.CommonSuccess,
 		Desc:       imServerError.ErrorCodeToText(imServerError.CommonSuccess),

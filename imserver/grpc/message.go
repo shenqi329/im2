@@ -2,16 +2,22 @@ package grpc
 
 import (
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	//"google.golang.org/grpc"
 	grpcPb "im/grpc/pb"
+	//"im/imserver/service"
 	//"log"
 )
 
-type Message struct {
-	ClientConn *grpc.ClientConn
-}
+type Message struct{}
 
 func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
+
+	// protoMessage, err := service.HandleCreateSession(request)
+
+	// if err != nil {
+
+	// }
+
 	return nil, nil
 	// log.Println("CreateMessage")
 

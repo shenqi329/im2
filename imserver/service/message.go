@@ -1,20 +1,17 @@
 package service
 
 import (
-	// "encoding/json"
 	"github.com/golang/protobuf/proto"
+	grpcPb "im/grpc/pb"
 	imserver "im/imserver"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	protocolClient "im/protocol/client"
 	"log"
-	// "net/http"
-	// "strconv"
 	"time"
 )
 
-func HandleCreateMessage(c imserver.Context, request *protocolClient.CreateMessageRequest) (proto.Message, error) {
+func HandleCreateMessage(c imserver.Context, request *grpcPb.CreateMessageRequest) (proto.Message, error) {
 
 	//log.Println(imServerBean.StructToJsonString(request))
 
@@ -40,7 +37,7 @@ func HandleCreateMessage(c imserver.Context, request *protocolClient.CreateMessa
 		return nil, imServerError.ErrorInternalServerError
 	}
 
-	response := &protocolClient.CreateMessageResponse{
+	response := &grpcPb.CreateMessageReply{
 		Rid:  (uint64)(request.Rid),
 		Code: imServerError.CommonSuccess,
 		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),

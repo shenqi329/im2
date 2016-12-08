@@ -79,7 +79,7 @@ func (s *Server) rpcConnectToEasyNoteServer(tcpAddr string) {
 		log.Fatalf("did not connect: %v", err)
 	}
 	s.grpcClientConn = conn
-	log.Println(s.grpcClientConn)
+	//log.Println(s.grpcClientConn)
 }
 
 func (s *Server) ListenOnTcpPort(localTcpAddr string) {

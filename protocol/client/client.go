@@ -14,10 +14,6 @@ const (
 	MessageTypeSyncInform            = 5
 	MessageTypeRPCRequest            = 6
 	MessageTypeRPCResponse           = 7
-	MessageTypeCreateSessionRequest  = 8
-	MessageTypeCreateSessionResponse = 9
-	MessageTypeCreateMessageRequest  = 10
-	MessageTypeCreateMessageResponse = 11
 )
 
 var kinds = map[MessageType]func() proto.Message{
@@ -28,10 +24,6 @@ var kinds = map[MessageType]func() proto.Message{
 	MessageTypeSyncInform:            func() proto.Message { return &SyncInform{} },
 	MessageTypeRPCRequest:            func() proto.Message { return &RpcRequest{} },
 	MessageTypeRPCResponse:           func() proto.Message { return &RpcResponse{} },
-	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
-	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
-	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
-	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
 }
 
 func Factory(messageType MessageType) proto.Message {
