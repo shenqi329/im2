@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "IM.Session";
-option java_outer_classname = "SessionProto";
+option java_package = "IM.Pb";
+option java_outer_classname = "PbProto";
 
-package session;
+package pb;
 
 // The greeting service definition.
 service Session {

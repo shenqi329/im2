@@ -23,7 +23,9 @@ func Handle(context Context) error {
 	}
 
 	//只检查消息的合法性,然后将消息转发出去
-	context.Request().reqPkg = context.Message().Encode()
+	context.Request().message = context.Message()
+	context.Request().protoMessage = protoMessage
+
 	context.ReqChan() <- context.Request()
 
 	return nil

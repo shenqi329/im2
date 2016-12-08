@@ -2,6 +2,10 @@ package accessserver
 
 import (
 	"github.com/golang/protobuf/proto"
+	netContext "golang.org/x/net/context"
+	"google.golang.org/grpc"
+	//grpcPb "im/grpc/pb"
+	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
 	protocolServer "im/protocol/server"
 	"log"
@@ -13,10 +17,13 @@ import (
 )
 
 type Request struct {
-	reqPkg  []byte
-	connId  uint32
-	conn    *net.TCPConn
-	isLogin bool
+	//reqPkg       []byte
+	//messageType  protocolClient.MessageType
+	message      *coder.Message
+	protoMessage proto.Message
+	connId       uint32
+	conn         *net.TCPConn
+	isLogin      bool
 }
 
 type ConnectInfo struct {
@@ -32,6 +39,8 @@ type Server struct {
 
 	localTcpAddr string
 	proxyUdpAddr string
+
+	grpcClientConn *grpc.ClientConn
 
 	handle func(context Context) error
 }
@@ -59,7 +68,18 @@ func (s *Server) Run() {
 	if s.handle == nil {
 		s.handle = Handle
 	}
+	s.rpcConnectToEasyNoteServer("localhost:6006")
 	s.ListenOnTcpPort(s.localTcpAddr)
+}
+
+func (s *Server) rpcConnectToEasyNoteServer(tcpAddr string) {
+	//Set up a connection to the server.
+	conn, err := grpc.Dial(tcpAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	s.grpcClientConn = conn
+	log.Println(s.grpcClientConn)
 }
 
 func (s *Server) ListenOnTcpPort(localTcpAddr string) {
@@ -84,7 +104,7 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 	reqChan := make(chan *Request, 1000)
 	closeChan := make(chan uint32, 1000)
 
-	go s.connectProxyServer(reqChan, closeChan)
+	go s.connectIMServer(reqChan, closeChan)
 
 	//
 	for {
@@ -98,7 +118,26 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 	}
 }
 
-func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan uint32) {
+func (s *Server) transToBusinessServer(rpcRequest *protocolClient.RpcRequest) {
+
+	//easynote业务id
+	log.Println("转发给具体的业务服务器,appId = ", rpcRequest.AppId)
+	if rpcRequest.AppId == "89897" {
+		//s.grpcClientConn
+		rpcClient := protocolClient.NewRpcClient(s.grpcClientConn)
+		log.Println(rpcRequest)
+		reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
+
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+		reply = reply
+	}
+}
+
+//连接到逻辑服务器
+func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint32) {
 	addr, err := net.ResolveUDPAddr("udp", s.proxyUdpAddr)
 
 	if err != nil {
@@ -141,25 +180,35 @@ func (s *Server) connectProxyServer(reqChan <-chan *Request, closeChan <-chan ui
 				}
 				wraperMessage := &protocolServer.WraperMessage{
 					ConnId:    (uint64)(req.connId),
-					Message:   req.reqPkg,
+					Message:   req.message.Encode(),
 					IsLoginIn: connInfo.isLogin,
 				}
-				reqPkg, err := coder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
-				if err != nil {
-					log.Println(err)
-					req.conn.Close()
-					if connMap[req.connId] != nil {
-						delete(connMap, req.connId)
+				if req.message.Type == protocolClient.MessageTypeRPCRequest {
+					//转发给具体的业务服务器
+					rpcRequest, ok := req.protoMessage.(*protocolClient.RpcRequest)
+					if !ok {
+						break
 					}
+					go s.transToBusinessServer(rpcRequest)
+				} else {
+					//转发给im逻辑服务器
+					reqPkg, err := coder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
+					if err != nil {
+						log.Println(err)
+						req.conn.Close()
+						if connMap[req.connId] != nil {
+							delete(connMap, req.connId)
+						}
+					}
+					sendChan <- reqPkg
 				}
-				sendChan <- reqPkg
 			}
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()
 			beanWraperMessages, err := decoder.Decode(rsp)
 			if err != nil {
 				log.Println(err.Error())
-				return
+				break
 			}
 			for _, beanWraperMessage := range beanWraperMessages {
 				if beanWraperMessage.Type != protocolServer.MessageTypeWraper {
@@ -243,6 +292,7 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request,
 				connId: connId,
 				conn:   conn,
 			}
+			log.Println(message.Type)
 			context := &context{
 				reqChan:   reqChan,
 				message:   message,

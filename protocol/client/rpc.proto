@@ -9,7 +9,7 @@ package client;
 // The greeting service definition.
 service Rpc {
   // Sends a greeting
-  rpc CreateMessage (RpcRequest) returns (RpcResponse) {}
+  rpc Rpc (RpcRequest) returns (RpcResponse) {}
 }
 
 

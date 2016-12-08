@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	grpcSession "im/grpc/session"
+	grpcPb "im/grpc/pb"
 	imserverBean "im/imserver/bean"
 	"im/protocol/client"
 	"im/protocol/coder"
@@ -32,79 +32,50 @@ func getRid() uint64 {
 }
 
 func connectToPort() {
-
-	raddr, err := net.ResolveUDPAddr("udp", "localhost:6001")
+	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
 	if runtime.GOOS == "windows" {
-		raddr, err = net.ResolveUDPAddr("udp", "localhost:6001")
+		raddr, err = net.ResolveTCPAddr("tcp", "localhost:6000")
 	}
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
 		return
 	}
-	connect, err := net.DialUDP("udp", nil, raddr)
+	connect, err := net.DialTCP("tcp", nil, raddr)
 
 	if err != nil {
 		log.Println("net.ListenTCP fail.", err.Error())
 		return
 	}
-
+	connect.SetKeepAlive(true)
+	connect.SetKeepAlivePeriod(10 * time.Second)
 	go handleConnection(connect)
 
 	for i := 0; i < 1; i++ {
-		{
-			pb := &grpcSession.CreateSessionRequest{
-				Rid:          getRid(),
-				AppId:        "89897",
-				CreateUserId: "1",
-				Count:        1,
-			}
-			protoBuf, err := proto.Marshal(pb)
-
-			request := &client.RpcRequest{
-				Rid:         getRid(),
-				AppId:       "89897",
-				MessageType: 1,
-				ProtoBuf:    protoBuf,
-			}
-			buffer, err := coder.EncoderProtoMessage(client.MessageTypeRPCRequest, request)
-			if err != nil {
-				log.Println(err.Error())
-			}
-
-			connect.Write(buffer)
+		pb := &grpcPb.CreateSessionRequest{
+			Rid:          getRid(),
+			AppId:        "89897",
+			CreateUserId: "1",
+			Count:        1,
 		}
+		protoBuf, err := proto.Marshal(pb)
+
+		request := &client.RpcRequest{
+			Rid:         getRid(),
+			AppId:       "89897",
+			MessageType: grpcPb.MessageTypeCreateSessionRequest,
+			ProtoBuf:    protoBuf,
+		}
+		buffer, err := coder.EncoderProtoMessage(client.MessageTypeRPCRequest, request)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		connect.Write(buffer)
 	}
-
-	// for i := 0; i < 33; i++ {
-	// 	{
-	// 		request := &bean.CreateSessionRequest{
-	// 			Rid:          getRid(),
-	// 			AppId:        "89897",
-	// 			CreateUserId: "1",
-	// 			Count:        1,
-	// 		}
-	// 		buffer, err := coder.EncoderProtoMessage(bean.MessageTypeCreateSessionRequest, request)
-	// 		if err != nil {
-	// 			log.Println(err.Error())
-	// 		}
-
-	// 		// wraper := &bean.WraperMessage{
-	// 		// 	ConnId:  1,
-	// 		// 	Message: buffer,
-	// 		// }
-
-	// 		// buffer, err = coder.EncoderProtoMessage(bean.MessageTypeWraper, wraper)
-	// 		// if err != nil {
-	// 		// 	log.Println(err.Error())
-	// 		// }
-
-	// 		connect.Write(buffer)
-	// 	}
-	// }
+	go handleConnection(connect)
 }
 
-func handleConnection(conn *net.UDPConn) {
+func handleConnection(conn *net.TCPConn) {
 
 	decoder := coder.NEWDecoder()
 	buf := make([]byte, 512)
@@ -126,7 +97,7 @@ func handleConnection(conn *net.UDPConn) {
 
 }
 
-func handleMessage(conn *net.UDPConn, message *coder.Message) {
+func handleMessage(conn *net.TCPConn, message *coder.Message) {
 
 	protoMessage := client.Factory((client.MessageType)(message.Type))
 

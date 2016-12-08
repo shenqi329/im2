@@ -4,7 +4,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	grpcMessage "im/grpc/message"
+	grpcPb "im/grpc/pb"
 	imserverGrpc "im/imserver/grpc"
 	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
@@ -51,7 +51,7 @@ func (s *Server) Handle(messageType protocolClient.MessageType, handle func(c Co
 
 func (s *Server) Run() {
 
-	go s.grpcServerRegister(":6005")
+	go s.grpcServerRegister("localhost:6005")
 
 	s.listenOnUdpPort(s.localUdpAddr)
 }
@@ -77,7 +77,8 @@ func (s *Server) grpcServerRegister(tcpAddr string) {
 	}
 	grpcServer := grpc.NewServer()
 
-	grpcMessage.RegisterMessageServer(grpcServer, &imserverGrpc.Message{ClientConn: clientConn})
+	grpcPb.RegisterMessageServer(grpcServer, &imserverGrpc.Message{ClientConn: clientConn})
+	grpcPb.RegisterSessionServer(grpcServer, &imserverGrpc.Session{ClientConn: clientConn})
 	// Register reflection service on gRPC server.
 	reflection.Register(grpcServer)
 	if err := grpcServer.Serve(lis); err != nil {
