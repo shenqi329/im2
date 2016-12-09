@@ -1,4 +1,4 @@
-package imserver
+package server
 
 import (
 	"errors"

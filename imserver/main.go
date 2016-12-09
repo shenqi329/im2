@@ -1,16 +1,14 @@
 package main
 
 import (
-	"im/imserver"
-	controller "im/imserver/controller"
+	grpcPb "im/grpc/pb"
+	"im/imserver/controller"
+	imserverGrpc "im/imserver/grpc"
+	"im/imserver/server"
 	protocolClient "im/protocol/client"
 	"log"
 	"runtime"
 )
-
-func DeviceLogin(c imserver.Context) error {
-	return nil
-}
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
@@ -22,11 +20,13 @@ func main() {
 		localUdpAddr = "localhost:6001"
 	}
 
-	s := imserver.NEWServer(localUdpAddr)
+	s := server.NEWServer()
 
 	s.Handle(protocolClient.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
 	s.Handle(protocolClient.MessageTypeDeviceLoginRequest, controller.HandleLogin)
-	s.Handle(protocolClient.MessageTypeRPCRequest, controller.HandleRpc)
 
-	s.Run()
+	grpcPb.RegisterSessionServer(s.GrpcServer(), &imserverGrpc.Session{})
+	grpcPb.RegisterMessageServer(s.GrpcServer(), &imserverGrpc.Message{})
+
+	s.Run(localUdpAddr, "localhost:6005")
 }

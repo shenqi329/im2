@@ -1,7 +1,7 @@
 package main
 
 import (
-	"im/accessserver"
+	accessserver "im/accessserver/server"
 	"log"
 	"runtime"
 )

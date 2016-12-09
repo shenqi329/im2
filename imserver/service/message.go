@@ -3,15 +3,15 @@ package service
 import (
 	"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
-	imserver "im/imserver"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
+	server "im/imserver/server"
 	"log"
 	"time"
 )
 
-func HandleCreateMessage(c imserver.Context, request *grpcPb.CreateMessageRequest) (proto.Message, error) {
+func HandleCreateMessage(c server.Context, request *grpcPb.CreateMessageRequest) (proto.Message, error) {
 
 	//log.Println(imServerBean.StructToJsonString(request))
 
@@ -47,7 +47,7 @@ func HandleCreateMessage(c imserver.Context, request *grpcPb.CreateMessageReques
 	return response, nil
 }
 
-func xxxxxxxxxxxxxxxxxxx(c imserver.Context, sessionId int64) {
+func xxxxxxxxxxxxxxxxxxx(c server.Context, sessionId int64) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -65,7 +65,7 @@ func xxxxxxxxxxxxxxxxxxx(c imserver.Context, sessionId int64) {
 	}
 }
 
-func xxx(c imserver.Context, sessionMap *imServerBean.SessionMap) {
+func xxx(c server.Context, sessionMap *imServerBean.SessionMap) {
 
 	var tokens []*imServerBean.Token
 

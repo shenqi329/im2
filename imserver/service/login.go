@@ -2,17 +2,17 @@ package service
 
 import (
 	"github.com/golang/protobuf/proto"
-	imserver "im/imserver"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
+	server "im/imserver/server"
 	protocolClient "im/protocol/client"
 	"log"
 	"strconv"
 	"time"
 )
 
-func HandleLogin(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage proto.Message, err error) {
+func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage proto.Message, err error) {
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
@@ -59,7 +59,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLo
 	// 	connInfo.UserId = tokenBean.UserId
 	// }
 
-	connInfo := &imserver.ConnInfo{
+	connInfo := &server.ConnInfo{
 		IsLogin: true,
 		UdpAddr: c.UDPAddr(),
 		UdpConn: c.UDPConn(),
@@ -82,7 +82,7 @@ func HandleLogin(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLo
 }
 
 //发送同步通知
-func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
+func sendSyncInform(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -99,7 +99,7 @@ func sendSyncInform(c imserver.Context, deviceLoginRequest *protocolClient.Devic
 	}
 }
 
-func sendSyncInformWithSessionMap(c imserver.Context, sessionMap *imServerBean.SessionMap) {
+func sendSyncInformWithSessionMap(c server.Context, sessionMap *imServerBean.SessionMap) {
 
 	var messages []*imServerBean.Message
 

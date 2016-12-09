@@ -1,4 +1,4 @@
-package accessserver
+package server
 
 import (
 	"github.com/golang/protobuf/proto"

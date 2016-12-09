@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"im/imserver"
+	"im/imserver/server"
 	"im/imserver/service"
 	protocolClient "im/protocol/client"
 	"log"
 )
 
-func HandleLogin(c imserver.Context) error {
+func HandleLogin(c server.Context) error {
 
 	request, ok := c.ProtoMessage().(*protocolClient.DeviceLoginRequest)
 
@@ -19,7 +19,7 @@ func HandleLogin(c imserver.Context) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, imserver.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, server.NewCommonResponseWithError(err, request.Rid))
 	}
 
 	return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, tokenBean)

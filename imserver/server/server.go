@@ -1,8 +1,10 @@
-package imserver
+package server
 
 import (
 	"github.com/golang/protobuf/proto"
-	//serverGrpc "im/imserver/server/grpc"
+	netContext "golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
 	protocolServer "im/protocol/server"
@@ -27,29 +29,38 @@ type ConnInfo struct {
 }
 
 type Server struct {
-	localUdpAddr string
-	handleFuncs  map[protocolClient.MessageType]func(c Context) error
-	connInfos    map[uint64]*ConnInfo //connId
-	tokenInfos   map[int64]*ConnInfo
+	handleFuncs map[protocolClient.MessageType]func(c Context) error
+	connInfos   map[uint64]*ConnInfo //connId
+	tokenInfos  map[int64]*ConnInfo
+	grpcServer  *grpc.Server
 }
 
-func NEWServer(localUdpAddr string) *Server {
-	return &Server{
-		localUdpAddr: localUdpAddr,
-		handleFuncs:  make(map[protocolClient.MessageType]func(c Context) error),
-		connInfos:    make(map[uint64]*ConnInfo),
-		tokenInfos:   make(map[int64]*ConnInfo),
+func NEWServer() *Server {
+	s := &Server{
+		handleFuncs: make(map[protocolClient.MessageType]func(c Context) error),
+		connInfos:   make(map[uint64]*ConnInfo),
+		tokenInfos:  make(map[int64]*ConnInfo),
 	}
+
+	return s
+}
+
+func (s *Server) GrpcServer() *grpc.Server {
+	if s.grpcServer == nil {
+		s.grpcServer = s.newServer()
+	}
+	return s.grpcServer
 }
 
 func (s *Server) Handle(messageType protocolClient.MessageType, handle func(c Context) error) {
 	s.handleFuncs[messageType] = handle
 }
 
-func (s *Server) Run() {
+func (s *Server) Run(imUdpPort string, grpcTcpPort string) {
 
-	//go serverGrpc.GrpcServerRegister("localhost:6005")
-	s.listenOnUdpPort(s.localUdpAddr)
+	go s.grpcServerServe(grpcTcpPort)
+
+	s.listenOnUdpPort(imUdpPort)
 }
 
 func (s *Server) GetConnInfo(connId uint64) *ConnInfo {
@@ -63,37 +74,28 @@ func (s *Server) GetConnInfo(connId uint64) *ConnInfo {
 	return connInfo
 }
 
-// func (s *Server) grpcServerRegister(tcpAddr string) {
+func (s *Server) newServer() *grpc.Server {
 
-// 	clientConn := s.grpcConnToEasyNoteAddr("localhost:6006")
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		//log.Println("设置环境变量")
+		//ctx = netContext.WithValue(ctx, "xxxxx", v)
+		return handler(ctx, req)
+	}))
+	return grpcServer
+}
 
-// 	lis, err := net.Listen("tcp", tcpAddr)
-// 	if err != nil {
-// 		log.Fatalf("failed to listen: %v", err)
-// 	}
+func (s *Server) grpcServerServe(addr string) {
 
-// 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-// 		log.Println("设置环境变量")
-// 		ctx = netContext.WithValue(ctx, imserverGrpc.KeyClientConn, clientConn)
-// 		return handler(ctx, req)
-// 	}))
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
 
-// 	grpcPb.RegisterMessageServer(grpcServer, &imserverGrpc.Message{})
-// 	grpcPb.RegisterSessionServer(grpcServer, &imserverGrpc.Session{})
-// 	// Register reflection service on gRPC server.
-// 	reflection.Register(grpcServer)
-// 	if err := grpcServer.Serve(lis); err != nil {
-// 		log.Fatalf("failed to serve: %v", err)
-// 	}
-// }
-
-// func (s *Server) grpcConnToEasyNoteAddr(grpcAddr string) *grpc.ClientConn {
-// 	conn, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
-// 	if err != nil {
-// 		log.Fatalf("did not connect: %v", err)
-// 	}
-// 	return conn
-// }
+	reflection.Register(s.grpcServer)
+	if err := s.grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
 
 func (s *Server) listenOnUdpPort(localUdpAddr string) {
 

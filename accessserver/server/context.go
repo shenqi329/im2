@@ -1,4 +1,4 @@
-package accessserver
+package server
 
 import (
 	coder "im/protocol/coder"

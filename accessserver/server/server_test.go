@@ -1,4 +1,4 @@
-package accessserver
+package server
 
 import (
 	"math"

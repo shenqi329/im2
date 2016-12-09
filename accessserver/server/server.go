@@ -1,4 +1,4 @@
-package accessserver
+package server
 
 import (
 	"github.com/golang/protobuf/proto"
@@ -129,6 +129,7 @@ func (s *Server) transToBusinessServer(rpcRequest *protocolClient.RpcRequest) {
 		reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
 
 		if err != nil {
+			//直接返回错误给调用者[刘俊仕]
 			log.Println(err.Error())
 			return
 		}
@@ -178,11 +179,6 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 					}
 					connMap[req.connId] = connInfo
 				}
-				wraperMessage := &protocolServer.WraperMessage{
-					ConnId:    (uint64)(req.connId),
-					Message:   req.message.Encode(),
-					IsLoginIn: connInfo.isLogin,
-				}
 				if req.message.Type == protocolClient.MessageTypeRPCRequest {
 					//转发给具体的业务服务器
 					rpcRequest, ok := req.protoMessage.(*protocolClient.RpcRequest)
@@ -192,6 +188,12 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 					go s.transToBusinessServer(rpcRequest)
 				} else {
 					//转发给im逻辑服务器
+					wraperMessage := &protocolServer.WraperMessage{
+						ConnId:    (uint64)(req.connId),
+						Message:   req.message.Encode(),
+						IsLoginIn: connInfo.isLogin,
+					}
+
 					reqPkg, err := coder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
 					if err != nil {
 						log.Println(err)
@@ -292,7 +294,7 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request,
 				connId: connId,
 				conn:   conn,
 			}
-			log.Println(message.Type)
+			//log.Println(message.Type)
 			context := &context{
 				reqChan:   reqChan,
 				message:   message,
