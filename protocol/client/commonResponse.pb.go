@@ -11,7 +11,6 @@ It is generated from these files:
 	message.proto
 	registe.proto
 	rpc.proto
-	session.proto
 	syncInform.proto
 
 It has these top-level messages:
@@ -24,9 +23,6 @@ It has these top-level messages:
 	DeviceRegisteResponse
 	RpcRequest
 	RpcResponse
-	Session
-	CreateSessionRequest
-	CreateSessionResponse
 	SyncInform
 */
 package client

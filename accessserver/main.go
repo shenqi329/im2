@@ -14,11 +14,11 @@ func main() {
 		localTcpAddr := "localhost:6000"
 		proxyUdpAddr := "localhost:6001"
 		s := accessserver.NEWServer(localTcpAddr, proxyUdpAddr)
-		s.Run()
+		s.Run("localhost:6004")
 	} else {
 		localTcpAddr := "localhost:6000"
 		proxyUdpAddr := "localhost:6001"
 		s := accessserver.NEWServer(localTcpAddr, proxyUdpAddr)
-		s.Run()
+		s.Run("localhost:6004")
 	}
 }

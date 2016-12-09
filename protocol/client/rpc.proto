@@ -18,6 +18,7 @@ message RpcRequest {
 	string appId = 11;		//app唯一标识
 	int32 messageType = 12;	//消息类型
 	bytes protoBuf = 13;	//消息对应的protoBuf数据
+	uint64 connId = 14;
 }
 
 
@@ -28,6 +29,7 @@ message RpcResponse {
 
 	int32 messageType = 11;	//消息类型
 	bytes protoBuf = 12;		//消息对应的protoBuf数据 
+	uint64 connId = 13;
 }
 
 
