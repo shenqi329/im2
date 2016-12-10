@@ -20,3 +20,4 @@ select * from t_token;
 select * from t_token limit 0;
 
 select count(t_message_index) from t_message where t_message_session_id = 32;
+select * from t_message where t_message_session_id = 32;

@@ -29,17 +29,21 @@ type ConnInfo struct {
 }
 
 type Server struct {
-	handleFuncs map[protocolClient.MessageType]func(c Context) error
-	connInfos   map[uint64]*ConnInfo //connId
-	tokenInfos  map[int64]*ConnInfo
-	grpcServer  *grpc.Server
+	handleFuncs       map[protocolClient.MessageType]func(c Context) error
+	connInfos         map[uint64]*ConnInfo //connId
+	tokenInfos        map[int64]*ConnInfo
+	grpcServer        *grpc.Server
+	connInfoChan      chan *ConnInfo
+	tokenConnInfoChan chan int64
 }
 
 func NEWServer() *Server {
 	s := &Server{
-		handleFuncs: make(map[protocolClient.MessageType]func(c Context) error),
-		connInfos:   make(map[uint64]*ConnInfo),
-		tokenInfos:  make(map[int64]*ConnInfo),
+		handleFuncs:       make(map[protocolClient.MessageType]func(c Context) error),
+		connInfos:         make(map[uint64]*ConnInfo),
+		tokenInfos:        make(map[int64]*ConnInfo),
+		connInfoChan:      make(chan *ConnInfo, 1000),
+		tokenConnInfoChan: make(chan int64, 1000),
 	}
 
 	return s
@@ -78,7 +82,7 @@ func (s *Server) newServer() *grpc.Server {
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		//log.Println("设置环境变量")
-		//ctx = netContext.WithValue(ctx, "xxxxx", v)
+		ctx = netContext.WithValue(ctx, "tokenConnInfoChan", s.tokenConnInfoChan)
 		return handler(ctx, req)
 	}))
 	return grpcServer
@@ -121,9 +125,8 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 	log.Println("net.ListenUDP", addr)
 
 	var recvAndSendCount uint32 = 0
-	connInfoChan := make(chan *ConnInfo, 1000)
-	tokenConnInfoChan := make(chan int64, 1000)
-	go s.syncData(tokenConnInfoChan, connInfoChan)
+
+	go s.syncData(s.tokenConnInfoChan, s.connInfoChan)
 	for true {
 		buf := make([]byte, 1024)
 		rlen, remote, err := conn.ReadFromUDP(buf)
@@ -133,7 +136,7 @@ func (s *Server) listenOnUdpPort(localUdpAddr string) {
 		}
 		recvAndSendCount++
 		log.Println("recvAndSendCount:", recvAndSendCount, " rlen:", rlen)
-		go s.processHandler(tokenConnInfoChan, connInfoChan, conn, remote, buf[:rlen])
+		go s.processHandler(s.tokenConnInfoChan, s.connInfoChan, conn, remote, buf[:rlen])
 	}
 }
 

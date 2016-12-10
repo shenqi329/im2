@@ -211,14 +211,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 					delete(connMap, connId)
 				}
 			}
-		case rpcResp := <-rpcRespChan:
-			{
-				connInfo := connMap[(uint32)(rpcResp.ConnId)]
-				if connInfo == nil {
-					break
-				}
-				rpcResp
-			}
+
 		case req := <-reqChan:
 			{
 				connInfo := connMap[req.connId]
@@ -255,6 +248,18 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 					}
 					sendChan <- reqPkg
 				}
+			}
+		case rpcResp := <-rpcRespChan:
+			{
+				connInfo := connMap[(uint32)(rpcResp.ConnId)]
+				if connInfo == nil {
+					break
+				}
+				buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeRPCResponse, rpcResp)
+				if err != nil {
+					log.Println(err.Error())
+				}
+				connInfo.conn.Write(buffer)
 			}
 		case rsp := <-recvChan:
 			decoder := coder.NEWDecoder()

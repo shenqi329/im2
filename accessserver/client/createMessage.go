@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	imserverBean "im/imserver/bean"
-	protocolClient "im/protocol/client"
+	grpcPb "im/grpc/pb"
+	client "im/protocol/client"
 	"im/protocol/coder"
 	"log"
 	"net"
@@ -32,16 +32,16 @@ func getRid() uint64 {
 
 func connectToPort() {
 
-	raddr, err := net.ResolveUDPAddr("udp", "localhost:6001")
+	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
 	if runtime.GOOS == "windows" {
-		raddr, err = net.ResolveUDPAddr("udp", "localhost:6001")
+		raddr, err = net.ResolveTCPAddr("tcp", "localhost:6000")
 	}
 
 	if err != nil {
 		log.Println("net.ResolveTCPAddr fail.", err)
 		return
 	}
-	connect, err := net.DialUDP("udp", nil, raddr)
+	connect, err := net.DialTCP("tcp", nil, raddr)
 
 	if err != nil {
 		log.Println("net.ListenTCP fail.", err.Error())
@@ -52,24 +52,31 @@ func connectToPort() {
 
 	for i := 0; i < 1; i++ {
 		{
-			request := &protocolClient.CreateMessageRequest{
+			pb := &grpcPb.CreateMessageRequest{
 				Rid:       getRid(),
 				SessionId: 32,
 				Type:      1,
 				Content:   "a message from push",
 			}
-			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeCreateMessageRequest, request)
+			protoBuf, err := proto.Marshal(pb)
+
+			request := &client.RpcRequest{
+				Rid:         getRid(),
+				AppId:       "89897",
+				MessageType: grpcPb.MessageTypeCreateMessageRequest,
+				ProtoBuf:    protoBuf,
+			}
+			buffer, err := coder.EncoderProtoMessage(client.MessageTypeRPCRequest, request)
 			if err != nil {
 				log.Println(err.Error())
 			}
-
 			connect.Write(buffer)
 			time.Sleep(1 * time.Millisecond)
 		}
 	}
 }
 
-func handleConnection(conn *net.UDPConn) {
+func handleConnection(conn *net.TCPConn) {
 
 	decoder := coder.NEWDecoder()
 	buf := make([]byte, 512)
@@ -91,9 +98,9 @@ func handleConnection(conn *net.UDPConn) {
 
 }
 
-func handleMessage(conn *net.UDPConn, message *coder.Message) {
+func handleMessage(conn *net.TCPConn, message *coder.Message) {
 
-	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
+	protoMessage := client.Factory((client.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")
@@ -108,6 +115,22 @@ func handleMessage(conn *net.UDPConn, message *coder.Message) {
 		return
 	}
 	gRecvCount++
+
+	log.Println("recvMsg count = ", gRecvCount, "context:", protoMessage.String())
+
+	if message.Type == client.MessageTypeRPCResponse {
+		rpcResponse, ok := protoMessage.(*client.RpcResponse)
+
+		if ok && rpcResponse.ProtoBuf != nil {
+			protoMessage = grpcPb.Factory((grpcPb.MessageType)(rpcResponse.MessageType))
+			if err := proto.Unmarshal(rpcResponse.ProtoBuf, protoMessage); err != nil {
+				log.Println(err.Error())
+				log.Println("消息格式错误")
+				conn.Close()
+				return
+			}
+			log.Println(protoMessage.String())
+		}
+	}
 	//log.Println("recvMsg count = ", gRecvCount, "context:", proto.CompactTextString(protoMessage))
-	log.Println("recvMsg count = ", gRecvCount, "context:", imserverBean.StructToJsonString(protoMessage))
 }

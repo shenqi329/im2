@@ -1,21 +1,17 @@
 package service
 
 import (
-	"github.com/golang/protobuf/proto"
+	//"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
 	imServerBean "im/imserver/bean"
 	dao "im/imserver/dao"
 	imServerError "im/imserver/error"
-	server "im/imserver/server"
 	"log"
 	"time"
 )
 
-func HandleCreateMessage(c server.Context, request *grpcPb.CreateMessageRequest) (proto.Message, error) {
+func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan chan<- int64) (*grpcPb.CreateMessageReply, error) {
 
-	//log.Println(imServerBean.StructToJsonString(request))
-
-	//log.Println(request.SessionId)
 	index, err := dao.MessageMaxIndex(request.SessionId)
 	if err != nil {
 		log.Println(err)
@@ -42,12 +38,12 @@ func HandleCreateMessage(c server.Context, request *grpcPb.CreateMessageRequest)
 		Code: imServerError.CommonSuccess,
 		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),
 	}
-	go xxxxxxxxxxxxxxxxxxx(c, request.SessionId)
+	go xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan, request.SessionId)
 
 	return response, nil
 }
 
-func xxxxxxxxxxxxxxxxxxx(c server.Context, sessionId int64) {
+func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
 
 	var sessionMaps []*imServerBean.SessionMap
 
@@ -61,11 +57,11 @@ func xxxxxxxxxxxxxxxxxxx(c server.Context, sessionId int64) {
 	}
 
 	for _, sessionMap := range sessionMaps {
-		xxx(c, sessionMap)
+		xxx(tokenConnInfoChan, sessionMap)
 	}
 }
 
-func xxx(c server.Context, sessionMap *imServerBean.SessionMap) {
+func xxx(tokenConnInfoChan chan<- int64, sessionMap *imServerBean.SessionMap) {
 
 	var tokens []*imServerBean.Token
 
@@ -80,8 +76,7 @@ func xxx(c server.Context, sessionMap *imServerBean.SessionMap) {
 
 	for _, token := range tokens {
 		log.Println(token.Id)
-		log.Println(c.TokenConnInfoChan())
-		c.TokenConnInfoChan() <- token.Id
+		tokenConnInfoChan <- token.Id
 		//token.Id 根据登录的id去发送
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
-	imserverBean "im/imserver/bean"
 	"im/protocol/client"
 	"im/protocol/coder"
 	"log"
@@ -71,8 +70,8 @@ func connectToPort() {
 			log.Println(err.Error())
 		}
 		connect.Write(buffer)
+		time.Sleep(1 * time.Millisecond)
 	}
-	go handleConnection(connect)
 }
 
 func handleConnection(conn *net.TCPConn) {
@@ -114,6 +113,21 @@ func handleMessage(conn *net.TCPConn, message *coder.Message) {
 		return
 	}
 	gRecvCount++
+
+	log.Println("recvMsg count = ", gRecvCount, "context:", protoMessage.String())
+
+	if message.Type == client.MessageTypeRPCResponse {
+		rpcResponse, ok := protoMessage.(*client.RpcResponse)
+		if ok {
+			protoMessage = grpcPb.Factory((grpcPb.MessageType)(rpcResponse.MessageType))
+			if err := proto.Unmarshal(rpcResponse.ProtoBuf, protoMessage); err != nil {
+				log.Println(err.Error())
+				log.Println("消息格式错误")
+				conn.Close()
+				return
+			}
+			log.Println(protoMessage.String())
+		}
+	}
 	//log.Println("recvMsg count = ", gRecvCount, "context:", proto.CompactTextString(protoMessage))
-	log.Println("recvMsg count = ", gRecvCount, "context:", imserverBean.StructToJsonString(protoMessage))
 }
