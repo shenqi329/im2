@@ -205,7 +205,7 @@ func (s *Server) handleMessage(tokenConnInfoChan chan<- int64, connInfoChan chan
 	}
 
 	c := &context{
-		imServer:          s,
+		logicserver:       s,
 		udpConn:           conn,
 		udpAddr:           addr,
 		protoMessage:      protoMessage,

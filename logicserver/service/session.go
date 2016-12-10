@@ -3,9 +3,9 @@ package service
 import (
 	//"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
-	imServerBean "im/imserver/bean"
-	dao "im/imserver/dao"
-	imServerError "im/imserver/error"
+	logicserverBean "im/logicserver/bean"
+	dao "im/logicserver/dao"
+	logicserverError "im/logicserver/error"
 	"log"
 )
 
@@ -15,29 +15,29 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 
 	if request.Count > 10 ||
 		request.Count <= 0 {
-		err := imServerError.ErrorNotFound
+		err := logicserverError.ErrorNotFound
 		return nil, err
 	}
 
-	sessions := make([]*imServerBean.Session, request.Count)
+	sessions := make([]*logicserverBean.Session, request.Count)
 	for i := 0; i < (int)(request.Count); i++ {
-		sessions[i] = &imServerBean.Session{
+		sessions[i] = &logicserverBean.Session{
 			AppId:        request.AppId,
 			CreateUserId: request.CreateUserId,
 		}
 		count, err := dao.NewDao().Insert(sessions[i])
 		if err != nil || count != 1 {
-			err = imServerError.ErrorInternalServerError
+			err = logicserverError.ErrorInternalServerError
 			return nil, err
 		}
-		sessionMap := &imServerBean.SessionMap{
+		sessionMap := &logicserverBean.SessionMap{
 			SessionId: sessions[i].Id,
 			UserId:    request.CreateUserId,
 			ReadIndex: 0,
 		}
 		count, err = dao.NewDao().Insert(sessionMap)
 		if err != nil || count != 1 {
-			err = imServerError.ErrorInternalServerError
+			err = logicserverError.ErrorInternalServerError
 			return nil, err
 		}
 	}
@@ -52,8 +52,8 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 
 	response := &grpcPb.CreateSessionReply{
 		Rid:        (uint64)(request.Rid),
-		Code:       imServerError.CommonSuccess,
-		Desc:       imServerError.ErrorCodeToText(imServerError.CommonSuccess),
+		Code:       logicserverError.CommonSuccess,
+		Desc:       logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
 		SessionIds: sessionIds,
 	}
 

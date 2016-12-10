@@ -2,10 +2,10 @@ package service
 
 import (
 	"github.com/golang/protobuf/proto"
-	imServerBean "im/imserver/bean"
-	dao "im/imserver/dao"
-	imServerError "im/imserver/error"
-	server "im/imserver/server"
+	logicserverBean "im/logicserver/bean"
+	dao "im/logicserver/dao"
+	logicserverError "im/logicserver/error"
+	server "im/logicserver/server"
 	protocolClient "im/protocol/client"
 	"log"
 	"strconv"
@@ -16,7 +16,7 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
-	tokenBean := &imServerBean.Token{
+	tokenBean := &logicserverBean.Token{
 		Id:       id,
 		AppId:    deviceLoginRequest.AppId,
 		DeviceId: deviceLoginRequest.DeviceId,
@@ -27,18 +27,18 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 	if err != nil {
 		protoMessage = &protocolClient.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
-			Code: imServerError.CommonInternalServerError,
-			Desc: imServerError.ErrorCodeToText(imServerError.CommonInternalServerError),
+			Code: logicserverError.CommonInternalServerError,
+			Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
 		}
 		return
 	}
 	if !has {
 		protoMessage = &protocolClient.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
-			Code: imServerError.CommonResourceNoExist,
-			Desc: imServerError.ErrorCodeToText(imServerError.CommonResourceNoExist),
+			Code: logicserverError.CommonResourceNoExist,
+			Desc: logicserverError.ErrorCodeToText(logicserverError.CommonResourceNoExist),
 		}
-		//err = imServerError.ErrorNotFound
+		//err = logicserverError.ErrorNotFound
 		return
 	}
 	if tokenBean.LoginTime == nil {
@@ -74,8 +74,8 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 
 	protoMessage = &protocolClient.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
-		Code: imServerError.CommonSuccess,
-		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),
+		Code: logicserverError.CommonSuccess,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
 	}
 
 	return
@@ -84,9 +84,9 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 //发送同步通知
 func sendSyncInform(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
 
-	var sessionMaps []*imServerBean.SessionMap
+	var sessionMaps []*logicserverBean.SessionMap
 
-	err := dao.NewDao().Find(&sessionMaps, &imServerBean.SessionMap{
+	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
 		UserId: userId,
 	})
 	if err != nil {
@@ -99,11 +99,11 @@ func sendSyncInform(c server.Context, deviceLoginRequest *protocolClient.DeviceL
 	}
 }
 
-func sendSyncInformWithSessionMap(c server.Context, sessionMap *imServerBean.SessionMap) {
+func sendSyncInformWithSessionMap(c server.Context, sessionMap *logicserverBean.SessionMap) {
 
-	var messages []*imServerBean.Message
+	var messages []*logicserverBean.Message
 
-	err := dao.NewDao().Find(&messages, &imServerBean.Message{
+	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
 		SessionId: sessionMap.SessionId,
 	})
 

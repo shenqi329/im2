@@ -3,9 +3,9 @@ package service
 import (
 	//"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
-	imServerBean "im/imserver/bean"
-	dao "im/imserver/dao"
-	imServerError "im/imserver/error"
+	logicserverBean "im/logicserver/bean"
+	dao "im/logicserver/dao"
+	logicserverError "im/logicserver/error"
 	"log"
 	"time"
 )
@@ -15,11 +15,11 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 	index, err := dao.MessageMaxIndex(request.SessionId)
 	if err != nil {
 		log.Println(err)
-		return nil, imServerError.ErrorInternalServerError
+		return nil, logicserverError.ErrorInternalServerError
 	}
 
 	timeNow := time.Now()
-	message := &imServerBean.Message{
+	message := &logicserverBean.Message{
 		SessionId:  request.SessionId,
 		Type:       (int)(request.Type),
 		Content:    request.Content,
@@ -30,13 +30,13 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 	_, err = dao.NewDao().Insert(message)
 	if err != nil {
 		log.Println(err)
-		return nil, imServerError.ErrorInternalServerError
+		return nil, logicserverError.ErrorInternalServerError
 	}
 
 	response := &grpcPb.CreateMessageReply{
 		Rid:  (uint64)(request.Rid),
-		Code: imServerError.CommonSuccess,
-		Desc: imServerError.ErrorCodeToText(imServerError.CommonSuccess),
+		Code: logicserverError.CommonSuccess,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
 	}
 	go xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan, request.SessionId)
 
@@ -45,10 +45,10 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 
 func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
 
-	var sessionMaps []*imServerBean.SessionMap
+	var sessionMaps []*logicserverBean.SessionMap
 
 	err := dao.NewDao().Find(&sessionMaps,
-		&imServerBean.SessionMap{
+		&logicserverBean.SessionMap{
 			SessionId: sessionId,
 		})
 	if err != nil {
@@ -61,12 +61,12 @@ func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
 	}
 }
 
-func xxx(tokenConnInfoChan chan<- int64, sessionMap *imServerBean.SessionMap) {
+func xxx(tokenConnInfoChan chan<- int64, sessionMap *logicserverBean.SessionMap) {
 
-	var tokens []*imServerBean.Token
+	var tokens []*logicserverBean.Token
 
 	err := dao.NewDao().Find(&tokens,
-		&imServerBean.Token{
+		&logicserverBean.Token{
 			UserId: sessionMap.UserId,
 		})
 	if err != nil {

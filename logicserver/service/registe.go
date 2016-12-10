@@ -3,10 +3,10 @@ package service
 import (
 	"encoding/json"
 	"github.com/golang/protobuf/proto"
-	imServerBean "im/imserver/bean"
-	dao "im/imserver/dao"
-	imServerError "im/imserver/error"
-	imServerResponse "im/imserver/response"
+	logicserverBean "im/logicserver/bean"
+	dao "im/logicserver/dao"
+	logicserverError "im/logicserver/error"
+	logicserverResponse "im/logicserver/response"
 	protocolClient "im/protocol/client"
 	"log"
 	"net/http"
@@ -41,11 +41,11 @@ func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (p
 
 	if err != nil {
 		log.Println(err)
-		err = imServerError.ErrorInternalServerError
+		err = logicserverError.ErrorInternalServerError
 		return
 	}
 
-	responseBean := &imServerResponse.Response{}
+	responseBean := &logicserverResponse.Response{}
 	json.NewDecoder(resp.Body).Decode(responseBean)
 
 	if responseBean.IsFail() {
@@ -55,15 +55,15 @@ func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (p
 
 	maps, ok := responseBean.Data.(map[string]interface{})
 	if !ok {
-		err = imServerError.ErrorInternalServerError
+		err = logicserverError.ErrorInternalServerError
 		return
 	}
 
-	log.Println(imServerBean.StructToJsonString(responseBean))
+	log.Println(logicserverBean.StructToJsonString(responseBean))
 	log.Println(deviceRegisteRequest)
 
 	createTime := time.Now()
-	tokenBean := &imServerBean.Token{
+	tokenBean := &logicserverBean.Token{
 		UserId:     maps["id"].(string),
 		DeviceId:   deviceRegisteRequest.DeviceId,
 		AppId:      deviceRegisteRequest.AppId,
@@ -73,14 +73,14 @@ func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (p
 
 	_, err = dao.NewDao().Insert(tokenBean)
 	if err != nil {
-		err = imServerError.ErrorInternalServerError
+		err = logicserverError.ErrorInternalServerError
 		return
 	}
 
 	protoMessage = &protocolClient.DeviceRegisteResponse{
 		Rid:   deviceRegisteRequest.Rid,
-		Code:  imServerError.CommonSuccess,
-		Desc:  imServerError.ErrorCodeToText(imServerError.CommonSuccess),
+		Code:  logicserverError.CommonSuccess,
+		Desc:  logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
 		Token: strconv.FormatInt(tokenBean.Id, 10),
 	}
 

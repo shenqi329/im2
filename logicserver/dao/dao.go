@@ -3,7 +3,7 @@ package dao
 import (
 	"database/sql"
 	"github.com/go-xorm/xorm"
-	"im/imserver/mysql"
+	"im/logicserver/mysql"
 )
 
 type Dao struct {

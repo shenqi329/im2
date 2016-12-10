@@ -1,21 +1,21 @@
 package controller
 
 import (
-	"im/imserver/server"
-	"im/imserver/service"
+	"im/logicserver/server"
+	"im/logicserver/service"
 	protocolClient "im/protocol/client"
 	"log"
 )
 
-func HandleRegiste(c server.Context) error {
+func HandleLogin(c server.Context) error {
 
-	request, ok := c.ProtoMessage().(*protocolClient.DeviceRegisteRequest)
+	request, ok := c.ProtoMessage().(*protocolClient.DeviceLoginRequest)
 
 	if !ok {
 		return nil
 	}
 
-	tokenBean, err := service.HandleRegiste(request)
+	tokenBean, err := service.HandleLogin(c, request)
 
 	if err != nil {
 		log.Println(err)

@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-//"im/imserver/controller"
-//imserverGrpc "im/imserver/grpc"
+//"im/logicserver/controller"
+//imserverGrpc "im/logicserver/grpc"
 
 type Request struct {
 	//reqPkg       []byte

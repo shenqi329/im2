@@ -1,7 +1,7 @@
 package response
 
 import (
-	imError "im/imserver/error"
+	imError "im/logicserver/error"
 	"strings"
 )
 

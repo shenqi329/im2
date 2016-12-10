@@ -2,9 +2,9 @@ package main
 
 import (
 	grpcPb "im/grpc/pb"
-	"im/imserver/controller"
-	imserverGrpc "im/imserver/grpc"
-	"im/imserver/server"
+	"im/logicserver/controller"
+	imserverGrpc "im/logicserver/grpc"
+	"im/logicserver/server"
 	protocolClient "im/protocol/client"
 	"log"
 	"runtime"

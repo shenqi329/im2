@@ -3,7 +3,7 @@ package dao
 import (
 	"database/sql"
 	//"fmt"
-	"im/imserver/mysql"
+	"im/logicserver/mysql"
 )
 
 //t_message

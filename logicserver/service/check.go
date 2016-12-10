@@ -1,7 +1,7 @@
 package service
 
 import (
-	imerror "im/imserver/error"
+	imerror "im/logicserver/error"
 	"log"
 	"regexp"
 )

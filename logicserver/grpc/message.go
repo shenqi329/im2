@@ -4,8 +4,8 @@ import (
 	"golang.org/x/net/context"
 	//"google.golang.org/grpc"
 	grpcPb "im/grpc/pb"
-	imserverError "im/imserver/error"
-	"im/imserver/service"
+	imserverError "im/logicserver/error"
+	"im/logicserver/service"
 	"log"
 )
 

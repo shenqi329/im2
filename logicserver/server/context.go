@@ -3,9 +3,9 @@ package server
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	imServerBean "im/imserver/bean"
-	dao "im/imserver/dao"
-	imError "im/imserver/error"
+	logicserverBean "im/logicserver/bean"
+	dao "im/logicserver/dao"
+	imError "im/logicserver/error"
 	protocolClient "im/protocol/client"
 	protocolCoder "im/protocol/coder"
 	protocolServer "im/protocol/server"
@@ -27,7 +27,7 @@ type (
 	}
 
 	context struct {
-		imServer          *Server
+		logicserver       *Server
 		udpConn           *net.UDPConn
 		udpAddr           *net.UDPAddr
 		protoMessage      proto.Message
@@ -66,7 +66,7 @@ func (c *context) ConnId() uint64 {
 }
 
 func (c *context) IMServer() *Server {
-	return c.imServer
+	return c.logicserver
 }
 
 func (c *context) SendProtoMessage(messageType protocolClient.MessageType, message proto.Message) error {
@@ -125,9 +125,9 @@ func NewCommonResponseWithError(err error, rid uint64) *protocolClient.CommonRes
 //发送同步通知
 func SendSyncInform(udpAddr *net.UDPAddr, udpConn *net.UDPConn, connId uint64, userId string) {
 
-	var sessionMaps []*imServerBean.SessionMap
+	var sessionMaps []*logicserverBean.SessionMap
 
-	err := dao.NewDao().Find(&sessionMaps, &imServerBean.SessionMap{
+	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
 		UserId: userId,
 	})
 	if err != nil {
@@ -140,11 +140,11 @@ func SendSyncInform(udpAddr *net.UDPAddr, udpConn *net.UDPConn, connId uint64, u
 	}
 }
 
-func SendSyncInformWithSessionMap(udpAddr *net.UDPAddr, udpConn *net.UDPConn, sessionMap *imServerBean.SessionMap, connId uint64) {
+func SendSyncInformWithSessionMap(udpAddr *net.UDPAddr, udpConn *net.UDPConn, sessionMap *logicserverBean.SessionMap, connId uint64) {
 
-	var messages []*imServerBean.Message
+	var messages []*logicserverBean.Message
 
-	err := dao.NewDao().Find(&messages, &imServerBean.Message{
+	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
 		SessionId: sessionMap.SessionId,
 	})
 
