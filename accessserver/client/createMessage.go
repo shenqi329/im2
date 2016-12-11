@@ -63,6 +63,7 @@ func connectToPort() {
 			request := &client.RpcRequest{
 				Rid:         getRid(),
 				AppId:       "89897",
+				Type:        client.RpcRequest_LogicServer,
 				MessageType: grpcPb.MessageTypeCreateMessageRequest,
 				ProtoBuf:    protoBuf,
 			}
@@ -71,7 +72,7 @@ func connectToPort() {
 				log.Println(err.Error())
 			}
 			connect.Write(buffer)
-			time.Sleep(1 * time.Millisecond)
+			//time.Sleep(1 * time.Millisecond)
 		}
 	}
 }

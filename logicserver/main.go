@@ -3,7 +3,7 @@ package main
 import (
 	grpcPb "im/grpc/pb"
 	"im/logicserver/controller"
-	imserverGrpc "im/logicserver/grpc"
+	logicserverGrpc "im/logicserver/grpc"
 	"im/logicserver/server"
 	protocolClient "im/protocol/client"
 	"log"
@@ -25,8 +25,9 @@ func main() {
 	s.Handle(protocolClient.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
 	s.Handle(protocolClient.MessageTypeDeviceLoginRequest, controller.HandleLogin)
 
-	grpcPb.RegisterSessionServer(s.GrpcServer(), &imserverGrpc.Session{})
-	grpcPb.RegisterMessageServer(s.GrpcServer(), &imserverGrpc.Message{})
+	grpcPb.RegisterSessionServer(s.GrpcServer(), &logicserverGrpc.Session{})
+	grpcPb.RegisterMessageServer(s.GrpcServer(), &logicserverGrpc.Message{})
+	protocolClient.RegisterRpcServer(s.GrpcServer(), &logicserverGrpc.Rpc{})
 
 	s.Run(localUdpAddr, "localhost:6005")
 }

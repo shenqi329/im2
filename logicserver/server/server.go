@@ -145,13 +145,13 @@ func (s *Server) syncData(tokenConnInfoChan <-chan int64, connInfoChan <-chan *C
 		select {
 		case connInfo := <-connInfoChan:
 			{
-				log.Println("UserId", connInfo.UserId, "token", connInfo.Token)
+				//log.Println("UserId", connInfo.UserId, "token", connInfo.Token)
 				s.connInfos[connInfo.ConnId] = connInfo
 				s.tokenInfos[connInfo.Token] = connInfo
 			}
 		case tokenId := <-tokenConnInfoChan:
 			{
-				log.Println(tokenId)
+				//log.Println(tokenId)
 				connInfo := s.tokenInfos[tokenId]
 				if connInfo != nil {
 					SendSyncInform(connInfo.UdpAddr, connInfo.UdpConn, connInfo.ConnId, connInfo.UserId)

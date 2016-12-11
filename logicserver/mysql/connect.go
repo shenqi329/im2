@@ -14,6 +14,7 @@ var engine *xorm.Engine
 
 func GetXormEngine() *xorm.Engine {
 	if engine == nil {
+		log.Println("engine")
 		if runtime.GOOS == "windows" {
 			eng, err := xorm.NewEngine("mysql", "im_connect:im_connect@tcp(localhost:3306)/db_im?charset=utf8")
 			if err != nil {

@@ -62,6 +62,7 @@ func connectToPort() {
 		request := &client.RpcRequest{
 			Rid:         getRid(),
 			AppId:       "89897",
+			Type:        client.RpcRequest_BusinessServer,
 			MessageType: grpcPb.MessageTypeCreateSessionRequest,
 			ProtoBuf:    protoBuf,
 		}

@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	serverGrpc "im/accessserver/server/grpc"
+	//grpcPb "im/grpc/pb"
 	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
 	protocolServer "im/protocol/server"
@@ -17,12 +18,7 @@ import (
 	"time"
 )
 
-//"im/logicserver/controller"
-//imserverGrpc "im/logicserver/grpc"
-
 type Request struct {
-	//reqPkg       []byte
-	//messageType  protocolClient.MessageType
 	message      *coder.Message
 	protoMessage proto.Message
 	connId       uint32
@@ -44,8 +40,9 @@ type Server struct {
 	localTcpAddr string
 	proxyUdpAddr string
 
-	grpcClientConn *grpc.ClientConn
-	grpcServer     *grpc.Server
+	grpcEasynoteClientConn *grpc.ClientConn
+	grpcLogicClientConn    *grpc.ClientConn
+	grpcServer             *grpc.Server
 
 	handle func(context Context) error
 }
@@ -84,18 +81,18 @@ func (s *Server) Run(grpcServerAddr string) {
 	protocolClient.RegisterRpcServer(s.GrpcServer(), &serverGrpc.Rpc{})
 
 	go s.grpcServerServe(grpcServerAddr)
-	s.rpcConnectToEasyNoteServer("localhost:6006")
+	s.grpcEasynoteClientConn = s.grpcConnectServer("localhost:6006")
+	s.grpcLogicClientConn = s.grpcConnectServer("localhost:6005")
 	s.ListenOnTcpPort(s.localTcpAddr)
 }
 
-func (s *Server) rpcConnectToEasyNoteServer(tcpAddr string) {
+func (s *Server) grpcConnectServer(tcpAddr string) *grpc.ClientConn {
 	//Set up a connection to the server.
 	conn, err := grpc.Dial(tcpAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	s.grpcClientConn = conn
-	//log.Println(s.grpcClientConn)
+	return conn
 }
 
 func (s *Server) grpcServerServe(addr string) {
@@ -157,16 +154,26 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 	}
 }
 
-func (s *Server) transToBusinessServer(rpcRequest *protocolClient.RpcRequest, rpcRespChan chan<- *protocolClient.RpcResponse) {
-
+func (s *Server) transToRpcServer(rpcRequest *protocolClient.RpcRequest, rpcRespChan chan<- *protocolClient.RpcResponse) {
 	//easynote业务id
-	log.Println("转发给具体的业务服务器,appId = ", rpcRequest.AppId)
-	if rpcRequest.AppId == "89897" {
-		//s.grpcClientConn
-		rpcClient := protocolClient.NewRpcClient(s.grpcClientConn)
-		log.Println(rpcRequest)
-		reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
+	if rpcRequest.Type == protocolClient.RpcRequest_BusinessServer {
+		log.Println("转发给具体的业务服务器,appId = ", rpcRequest.AppId)
+		if rpcRequest.AppId == "89897" {
+			rpcClient := protocolClient.NewRpcClient(s.grpcEasynoteClientConn)
+			reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
 
+			if err != nil {
+				//直接返回错误给调用者[刘俊仕]
+				log.Println(err.Error())
+				return
+			}
+			log.Println(reply.String())
+			rpcRespChan <- reply
+		}
+	} else if rpcRequest.Type == protocolClient.RpcRequest_LogicServer {
+		log.Println("转发给逻辑服务器")
+		rpcClient := protocolClient.NewRpcClient(s.grpcLogicClientConn)
+		reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
 		if err != nil {
 			//直接返回错误给调用者[刘俊仕]
 			log.Println(err.Error())
@@ -203,6 +210,11 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 	rpcRespChan := make(chan *protocolClient.RpcResponse, 1000)
 
 	connMap := make(map[uint32]*ConnectInfo)
+
+	if s.grpcLogicClientConn != nil {
+
+	}
+
 	for {
 		select {
 		case connId := <-closeChan:
@@ -229,7 +241,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 						break
 					}
 					rpcRequest.ConnId = (uint64)(req.connId)
-					go s.transToBusinessServer(rpcRequest, rpcRespChan)
+					go s.transToRpcServer(rpcRequest, rpcRespChan)
 				} else {
 					//转发给im逻辑服务器
 					wraperMessage := &protocolServer.WraperMessage{

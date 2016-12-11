@@ -38,7 +38,7 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 		Code: logicserverError.CommonSuccess,
 		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
 	}
-	go xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan, request.SessionId)
+	//go xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan, request.SessionId)
 
 	return response, nil
 }
@@ -75,7 +75,7 @@ func xxx(tokenConnInfoChan chan<- int64, sessionMap *logicserverBean.SessionMap)
 	}
 
 	for _, token := range tokens {
-		log.Println(token.Id)
+		//log.Println(token.Id)
 		tokenConnInfoChan <- token.Id
 		//token.Id 根据登录的id去发送
 	}
