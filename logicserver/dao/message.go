@@ -3,6 +3,7 @@ package dao
 import (
 	"database/sql"
 	//"fmt"
+	"im/logicserver/bean"
 	"im/logicserver/mysql"
 )
 
@@ -37,6 +38,18 @@ import (
 // 	}
 
 // 	return 0, err
+
+func MessageInsert(message *bean.Message) (int64, error) {
+
+	engine := mysql.GetXormEngine()
+
+	_, err := engine.Exec("call t_message_get_increment_index(?,?,?,?,@p_out);", message.SessionId, message.Type, message.Content, 1)
+
+	if err != nil {
+		return 0, err
+	}
+	return 1, nil
+}
 
 func MessageMaxIndex(sessionId int64) (int64, error) {
 

@@ -7,7 +7,6 @@ type (
 		Id        int64  `xorm:"'t_session_map_id'" json:"id,omitempty"`
 		SessionId int64  `xorm:"'t_session_map_session_id'" json:"sessionId,omitempty"`
 		UserId    string `xorm:"'t_session_map_user_id'" json:"userId,omitempty"`
-		ReadIndex int64  `xorm:"'t_session_map_read_index'" json:"readIndex,omitempty"`
 	}
 )
 

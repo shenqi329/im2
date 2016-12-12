@@ -14,10 +14,25 @@ delete from t_session;
 select * from t_session_map;
 
 select * from t_session;
-select * from t_message;
+
 select * from t_token;
 
 select * from t_token limit 0;
 
-select count(t_message_index) from t_message where t_message_session_id = 32;
+select max(t_message_index) from t_message where t_message_session_id = 32;
+
 select * from t_message where t_message_session_id = 32;
+
+select max(t_message_index) from t_message where t_message_session_id = 32;
+
+
+select * from t_message order by t_message_index desc limit 1;
+
+
+
+
+
+
+
+
+

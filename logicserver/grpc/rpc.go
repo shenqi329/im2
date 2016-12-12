@@ -14,7 +14,7 @@ type Rpc struct{}
 
 func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (*protocolClient.RpcResponse, error) {
 
-	log.Println("Rpc")
+	//log.Println("Rpc")
 
 	v := context.Value("tokenConnInfoChan")
 
@@ -41,7 +41,7 @@ func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (
 			log.Println(err.Error())
 			return rpcResponse, nil
 		}
-		log.Println(protoMessage.String())
+		//log.Println(protoMessage.String())
 
 		reply, err := service.HandleCreateMessage(protoMessage.(*grpcPb.CreateMessageRequest), tokenConnInfoChan)
 		if err != nil {
@@ -49,8 +49,8 @@ func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (
 			return rpcResponse, nil
 		}
 
-		log.Println(reply.String())
-		log.Println(request.ConnId)
+		//log.Println(reply.String())
+		//log.Println(request.ConnId)
 		protoBuf, err := proto.Marshal(reply)
 		if err != nil {
 			log.Println(err.Error())

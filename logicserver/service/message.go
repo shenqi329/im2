@@ -12,22 +12,21 @@ import (
 
 func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan chan<- int64) (*grpcPb.CreateMessageReply, error) {
 
-	index, err := dao.MessageMaxIndex(request.SessionId)
-	if err != nil {
-		log.Println(err)
-		return nil, logicserverError.ErrorInternalServerError
-	}
+	// index, err := dao.MessageMaxIndex(request.SessionId)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return nil, logicserverError.ErrorInternalServerError
+	// }
 
 	timeNow := time.Now()
 	message := &logicserverBean.Message{
 		SessionId:  request.SessionId,
 		Type:       (int)(request.Type),
 		Content:    request.Content,
-		Index:      index + 1,
 		CreateTime: &timeNow,
 	}
 
-	_, err = dao.NewDao().Insert(message)
+	_, err := dao.MessageInsert(message)
 	if err != nil {
 		log.Println(err)
 		return nil, logicserverError.ErrorInternalServerError

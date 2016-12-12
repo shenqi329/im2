@@ -50,7 +50,7 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000; i++ {
 		{
 			pb := &grpcPb.CreateMessageRequest{
 				Rid:       getRid(),
@@ -72,7 +72,7 @@ func connectToPort() {
 				log.Println(err.Error())
 			}
 			connect.Write(buffer)
-			//time.Sleep(1 * time.Millisecond)
+			//time.Sleep(40 * time.Millisecond)
 		}
 	}
 }
