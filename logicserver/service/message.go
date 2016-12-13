@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan chan<- int64) (*grpcPb.CreateMessageReply, error) {
+func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*grpcPb.CreateMessageReply, error) {
 
 	// index, err := dao.MessageMaxIndex(request.SessionId)
 	// if err != nil {
@@ -20,9 +20,9 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 
 	timeNow := time.Now()
 	message := &logicserverBean.Message{
-		Id:        request.Id,
-		SessionId: request.SessionId,
-		//UserId:     request.UserId,
+		Id:         request.Id,
+		SessionId:  request.SessionId,
+		UserId:     userId,
 		Type:       (int)(request.Type),
 		Content:    request.Content,
 		CreateTime: &timeNow,
@@ -44,40 +44,40 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 	return response, nil
 }
 
-func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
+// func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
 
-	var sessionMaps []*logicserverBean.SessionMap
+// 	var sessionMaps []*logicserverBean.SessionMap
 
-	err := dao.NewDao().Find(&sessionMaps,
-		&logicserverBean.SessionMap{
-			SessionId: sessionId,
-		})
-	if err != nil {
-		log.Println(err)
-		return
-	}
+// 	err := dao.NewDao().Find(&sessionMaps,
+// 		&logicserverBean.SessionMap{
+// 			SessionId: sessionId,
+// 		})
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
 
-	for _, sessionMap := range sessionMaps {
-		xxx(tokenConnInfoChan, sessionMap)
-	}
-}
+// 	for _, sessionMap := range sessionMaps {
+// 		xxx(tokenConnInfoChan, sessionMap)
+// 	}
+// }
 
-func xxx(tokenConnInfoChan chan<- int64, sessionMap *logicserverBean.SessionMap) {
+// func xxx(tokenConnInfoChan chan<- int64, sessionMap *logicserverBean.SessionMap) {
 
-	var tokens []*logicserverBean.Token
+// 	var tokens []*logicserverBean.Token
 
-	err := dao.NewDao().Find(&tokens,
-		&logicserverBean.Token{
-			UserId: sessionMap.UserId,
-		})
-	if err != nil {
-		log.Println(err)
-		return
-	}
+// 	err := dao.NewDao().Find(&tokens,
+// 		&logicserverBean.Token{
+// 			UserId: sessionMap.UserId,
+// 		})
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
 
-	for _, token := range tokens {
-		//log.Println(token.Id)
-		tokenConnInfoChan <- token.Id
-		//token.Id 根据登录的id去发送
-	}
-}
+// 	for _, token := range tokens {
+// 		//log.Println(token.Id)
+// 		tokenConnInfoChan <- token.Id
+// 		//token.Id 根据登录的id去发送
+// 	}
+// }

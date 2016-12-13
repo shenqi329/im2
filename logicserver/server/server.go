@@ -5,6 +5,7 @@ import (
 	netContext "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"im/logicserver/util/key"
 	protocolClient "im/protocol/client"
 	coder "im/protocol/coder"
 	protocolServer "im/protocol/server"
@@ -82,7 +83,7 @@ func (s *Server) newServer() *grpc.Server {
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		//log.Println("设置环境变量")
-		ctx = netContext.WithValue(ctx, "tokenConnInfoChan", s.tokenConnInfoChan)
+		ctx = netContext.WithValue(ctx, key.TokenConnInfoChan, s.tokenConnInfoChan)
 		return handler(ctx, req)
 	}))
 	return grpcServer

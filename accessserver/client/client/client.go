@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"github.com/golang/protobuf/proto"
@@ -7,28 +7,30 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"sync/atomic"
 	"time"
 )
 
-func main() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+type Client struct {
+	rid       uint64
+	recvCount uint32
+	Conn      *net.TCPConn
 
-	for i := 0; i < 1; i++ {
-		go connectToPort()
-		//time.Sleep(20 * time.Millisecond)
-	}
-	time.Sleep(60 * time.Minute)
+	loginState uint32
+
+	afterLogin func(c *Client)
 }
 
-var gRid uint64 = 0
-var gRecvCount uint32 = 0
-
-func getRid() uint64 {
-	gRid++
-	return gRid
+func (c *Client) GetRid() uint64 {
+	atomic.AddUint64(&c.rid, 1)
+	return c.rid
 }
 
-func connectToPort() {
+func (c *Client) SetAfterLogin(afterLogin func(c *Client)) {
+	c.afterLogin = afterLogin
+}
+
+func (c *Client) LoginToAccessServer() {
 
 	raddr, err := net.ResolveTCPAddr("tcp", "localhost:6000")
 	if runtime.GOOS == "windows" {
@@ -40,7 +42,6 @@ func connectToPort() {
 		return
 	}
 	connect, err := net.DialTCP("tcp", nil, raddr)
-
 	if err != nil {
 		log.Println("net.ListenTCP fail.", err.Error())
 		return
@@ -48,13 +49,16 @@ func connectToPort() {
 
 	connect.SetKeepAlive(true)
 	connect.SetKeepAlivePeriod(10 * time.Second)
-	go handleConnection(connect)
+
+	c.Conn = connect
+	go c.handleConnection(connect)
 
 	for i := 0; i < 1; i++ {
 		if runtime.GOOS == "windows" {
 			loginRequest := &protocolClient.DeviceLoginRequest{
-				Rid:      getRid(),
+				Rid:      c.GetRid(),
 				Token:    "1",
+				UserId:   "1",
 				AppId:    "89897",
 				DeviceId: "024b36dc22425556bc01605d438f4d0c",
 				Platform: "windows",
@@ -66,8 +70,9 @@ func connectToPort() {
 			connect.Write(buffer)
 		} else {
 			loginRequest := &protocolClient.DeviceLoginRequest{
-				Rid:      getRid(),
+				Rid:      c.GetRid(),
 				Token:    "1",
+				UserId:   "1",
 				AppId:    "89897",
 				DeviceId: "024b36dc22425556bc01605d438f4d0c",
 				Platform: "windows",
@@ -82,7 +87,7 @@ func connectToPort() {
 	}
 }
 
-func handleConnection(conn *net.TCPConn) {
+func (c *Client) handleConnection(conn *net.TCPConn) {
 
 	decoder := coder.NEWDecoder()
 	buf := make([]byte, 512)
@@ -98,13 +103,12 @@ func handleConnection(conn *net.TCPConn) {
 			break
 		}
 		for _, message := range messages {
-			handleMessage(conn, message)
+			go c.handleMessage(conn, message)
 		}
 	}
-
 }
 
-func handleMessage(conn *net.TCPConn, message *coder.Message) {
+func (c *Client) handleMessage(conn *net.TCPConn, message *coder.Message) {
 
 	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
 
@@ -120,7 +124,10 @@ func handleMessage(conn *net.TCPConn, message *coder.Message) {
 		conn.Close()
 		return
 	}
-	gRecvCount++
-	log.Println("recvMsg count = ", gRecvCount, "context:", proto.CompactTextString(protoMessage))
-
+	c.recvCount++
+	log.Println("recvMsg count = ", c.recvCount, "context:", proto.CompactTextString(protoMessage))
+	if (protocolClient.MessageType)(message.Type) == protocolClient.MessageTypeDeviceLoginResponse {
+		c.loginState = 1
+		go c.afterLogin(c)
+	}
 }

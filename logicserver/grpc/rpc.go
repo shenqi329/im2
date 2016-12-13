@@ -11,7 +11,7 @@ import (
 
 type Rpc struct{}
 
-func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (*protocolClient.RpcResponse, error) {
+func (m *Rpc) Rpc(ctx context.Context, request *protocolClient.RpcRequest) (*protocolClient.RpcResponse, error) {
 
 	rpcResponse := &protocolClient.RpcResponse{
 		Rid:    request.GetRid(),
@@ -19,6 +19,10 @@ func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (
 		Desc:   imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),
 		ConnId: request.ConnId,
 	}
+
+	ctx = context.WithValue(ctx, "UserId", request.UserId)
+	ctx = context.WithValue(ctx, "Token", request.Token)
+	ctx = context.WithValue(ctx, "ConnId", request.ConnId)
 
 	protoMessage := grpcPb.Factory((grpcPb.MessageType)(request.MessageType))
 	err := proto.Unmarshal(request.ProtoBuf, protoMessage)
@@ -29,7 +33,7 @@ func (m *Rpc) Rpc(context context.Context, request *protocolClient.RpcRequest) (
 
 	if request.MessageType == grpcPb.MessageTypeCreateMessageRequest {
 
-		reply, err := CreateMessage(context, protoMessage.(*grpcPb.CreateMessageRequest))
+		reply, err := CreateMessage(ctx, protoMessage.(*grpcPb.CreateMessageRequest))
 		if err != nil {
 			log.Println(err.Error())
 			return rpcResponse, nil

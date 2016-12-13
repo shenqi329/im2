@@ -1,18 +1,15 @@
 package service
 
 import (
-	"github.com/golang/protobuf/proto"
 	logicserverBean "im/logicserver/bean"
 	dao "im/logicserver/dao"
 	logicserverError "im/logicserver/error"
-	server "im/logicserver/server"
 	protocolClient "im/protocol/client"
-	//"log"
 	"strconv"
 	"time"
 )
 
-func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage proto.Message, err error) {
+func HandleLogin(deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage *protocolClient.DeviceLoginResponse, err error) {
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
@@ -45,32 +42,6 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 		timeNow := time.Now()
 		tokenBean.LoginTime = &timeNow
 	}
-
-	//将连接设置为登录状态
-	// connInfo := c.IMServer().GetConnInfo(c.ConnId())
-	// if connInfo != nil {
-	// 	if !connInfo.IsLogin {
-	// 		connInfo.IsLogin = true
-	// 	}
-	// 	connInfo.UdpAddr = c.UDPAddr()
-	// 	connInfo.UdpConn = c.UDPConn()
-	// 	connInfo.ConnId = c.ConnId()
-	// 	connInfo.Token = tokenBean.Id
-	// 	connInfo.UserId = tokenBean.UserId
-	// }
-
-	connInfo := &server.ConnInfo{
-		IsLogin: true,
-		UdpAddr: c.UDPAddr(),
-		UdpConn: c.UDPConn(),
-		ConnId:  c.ConnId(),
-		Token:   tokenBean.Id,
-		UserId:  tokenBean.UserId,
-	}
-
-	c.ConnInfoChan() <- connInfo
-
-	//go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
 
 	protoMessage = &protocolClient.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,

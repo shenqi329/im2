@@ -234,9 +234,12 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 						conn:    req.conn,
 						isLogin: false,
 					}
+					log.Println(req.messageType)
 					if req.messageType == protocolClient.MessageTypeDeviceLoginRequest {
 						loginRequest, ok := req.protoMessage.(*protocolClient.DeviceLoginRequest)
+						log.Println(ok)
 						if ok {
+							log.Println(loginRequest.String())
 							connInfo.token = loginRequest.Token
 							connInfo.userId = loginRequest.UserId
 						}
@@ -256,6 +259,8 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 						break
 					}
 					rpcRequest.ConnId = (uint64)(req.connId)
+					rpcRequest.UserId = connInfo.userId
+					rpcRequest.Token = connInfo.token
 					go s.transToRpcServer(rpcRequest, rpcRespChan)
 				} else {
 					//转发给im逻辑服务器
@@ -306,9 +311,8 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 				}
 				connInfo := connMap[(uint32)(protoWraperMessage.ConnId)]
 				if protoWraperMessage.IsLoginIn {
+					log.Println(protoWraperMessage.String())
 					connInfo.isLogin = true
-					connInfo.token = protoWraperMessage.Token
-					connInfo.userId = protoWraperMessage.UserId
 				} else if protoWraperMessage.IsLoginOut {
 					connInfo.isLogin = false
 				}

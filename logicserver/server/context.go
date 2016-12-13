@@ -24,6 +24,8 @@ type (
 		SendProtoMessage(messageType protocolClient.MessageType, message proto.Message) error
 		ConnInfoChan() chan<- *ConnInfo
 		TokenConnInfoChan() chan<- int64
+		IsLogin() bool
+		SetIsLogin(isLogin bool)
 	}
 
 	context struct {
@@ -32,11 +34,20 @@ type (
 		udpAddr           *net.UDPAddr
 		protoMessage      proto.Message
 		connId            uint64
+		isLogin           bool
 		needWraper        bool
 		connInfoChan      chan<- *ConnInfo
 		tokenConnInfoChan chan<- int64
 	}
 )
+
+func (c *context) IsLogin() bool {
+	return c.isLogin
+}
+
+func (c *context) SetIsLogin(isLogin bool) {
+	c.isLogin = isLogin
+}
 
 func (c *context) ConnInfoChan() chan<- *ConnInfo {
 	return c.connInfoChan
@@ -81,8 +92,9 @@ func (c *context) SendProtoMessage(messageType protocolClient.MessageType, messa
 		//包装数据后返回
 		//log.Println("包装数据")
 		wraperMessage := &protocolServer.WraperMessage{
-			ConnId:  c.ConnId(),
-			Message: buffer,
+			ConnId:    c.ConnId(),
+			Message:   buffer,
+			IsLoginIn: c.IsLogin(),
 		}
 
 		buffer, err = protocolCoder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)

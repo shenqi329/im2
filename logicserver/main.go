@@ -27,6 +27,8 @@ func main() {
 
 	grpcPb.RegisterSessionServer(s.GrpcServer(), &logicserverGrpc.Session{})
 	grpcPb.RegisterMessageServer(s.GrpcServer(), &logicserverGrpc.Message{})
+	// grpcPb.RegisterLoginServer(s.GrpcServer(), &logicserverGrpc.Login{})
+	// grpcPb.RegisterRegisteServer(s.GrpcServer(), &logicserverGrpc.Registe{})
 	protocolClient.RegisterRpcServer(s.GrpcServer(), &logicserverGrpc.Rpc{})
 
 	s.Run(localUdpAddr, "localhost:6005")

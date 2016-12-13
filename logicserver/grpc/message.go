@@ -6,6 +6,7 @@ import (
 	grpcPb "im/grpc/pb"
 	imserverError "im/logicserver/error"
 	"im/logicserver/service"
+	"im/logicserver/util/key"
 	"log"
 )
 
@@ -20,19 +21,10 @@ func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateM
 func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
 	log.Println("CreateMessage")
 
-	v := context.Value("tokenConnInfoChan")
+	//tokenConnInfoChan := context.Value(key.TokenConnInfoChan).(chan int64)
+	userId := context.Value(key.UserId).(string)
 
-	tokenConnInfoChan, ok := v.(chan int64)
-	if !ok {
-		reply := &grpcPb.CreateMessageReply{
-			Rid:  request.GetRid(),
-			Code: imserverError.CommonInternalServerError,
-			Desc: imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),
-		}
-		return reply, nil
-	}
-
-	protoMessage, err := service.HandleCreateMessage(request, tokenConnInfoChan)
+	protoMessage, err := service.HandleCreateMessage(request, userId)
 
 	if err != nil {
 		log.Println(err.Error())

@@ -8,7 +8,7 @@ type (
 	Message struct {
 		Id         string     `xorm:"'t_message_id'" json:"id,omitempty"`
 		SessionId  int64      `xorm:"'t_message_session_id'" json:"sessionId,omitempty"`
-		UserId     int64      `xorm:"'t_message_user_id'" json:"userId,omitempty"`
+		UserId     string     `xorm:"'t_message_user_id'" json:"userId,omitempty"`
 		Type       int        `xorm:"'t_message_type'" json:"type,omitempty"`
 		Content    string     `xorm:"'t_message_content'" json:"content,omitempty"`
 		Index      int64      `xorm:"'t_message_index'" json:"index,omitempty"`

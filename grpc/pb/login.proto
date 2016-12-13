@@ -1,5 +1,11 @@
-pbsyntax = "proto3";
-package client;
+syntax = "proto3";
+package pb;
+
+// The greeting service definition.
+service Login {
+  // Sends a greeting
+  rpc Login (DeviceLoginRequest) returns (DeviceLoginResponse) {}
+}
 
 message DeviceLoginRequest {
 	uint64 Rid = 1;			//流水号

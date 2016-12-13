@@ -15,12 +15,13 @@ func HandleLogin(c server.Context) error {
 		return nil
 	}
 
-	tokenBean, err := service.HandleLogin(c, request)
+	tokenBean, err := service.HandleLogin(request)
 
 	if err != nil {
 		log.Println(err)
-		return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, server.NewCommonResponseWithError(err, request.Rid))
+		return c.SendProtoMessage(protocolClient.MessageTypeDeviceLoginResponse, server.NewCommonResponseWithError(err, request.Rid))
 	}
+	c.SetIsLogin(true)
 
-	return c.SendProtoMessage(protocolClient.MessageTypeDeviceRegisteResponse, tokenBean)
+	return c.SendProtoMessage(protocolClient.MessageTypeDeviceLoginResponse, tokenBean)
 }
