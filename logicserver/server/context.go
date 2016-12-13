@@ -3,8 +3,8 @@ package server
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	logicserverBean "im/logicserver/bean"
-	dao "im/logicserver/dao"
+	//logicserverBean "im/logicserver/bean"
+	//dao "im/logicserver/dao"
 	imError "im/logicserver/error"
 	protocolClient "im/protocol/client"
 	protocolCoder "im/protocol/coder"
@@ -123,82 +123,82 @@ func NewCommonResponseWithError(err error, rid uint64) *protocolClient.CommonRes
 }
 
 //发送同步通知
-func SendSyncInform(udpAddr *net.UDPAddr, udpConn *net.UDPConn, connId uint64, userId string) {
+// func SendSyncInform(udpAddr *net.UDPAddr, udpConn *net.UDPConn, connId uint64, userId string) {
 
-	var sessionMaps []*logicserverBean.SessionMap
+// 	var sessionMaps []*logicserverBean.SessionMap
 
-	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
-		UserId: userId,
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
+// 	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
+// 		UserId: userId,
+// 	})
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
 
-	for _, sessionMap := range sessionMaps {
-		SendSyncInformWithSessionMap(udpAddr, udpConn, sessionMap, connId)
-	}
-}
+// 	for _, sessionMap := range sessionMaps {
+// 		//SendSyncInformWithSessionMap(udpAddr, udpConn, sessionMap, connId)
+// 	}
+// }
 
-func SendSyncInformWithSessionMap(udpAddr *net.UDPAddr, udpConn *net.UDPConn, sessionMap *logicserverBean.SessionMap, connId uint64) {
+// func SendSyncInformWithSessionMap(udpAddr *net.UDPAddr, udpConn *net.UDPConn, sessionMap *logicserverBean.SessionMap, connId uint64) {
 
-	var messages []*logicserverBean.Message
+// 	var messages []*logicserverBean.Message
 
-	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
-		SessionId: sessionMap.SessionId,
-	})
+// 	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
+// 		SessionId: sessionMap.SessionId,
+// 	})
 
-	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
+// 	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
 
-	if sessionMap.ReadIndex >= latestIndex {
-		//log.Println("不需发送同步通知")
-		return
-	}
+// 	if sessionMap.ReadIndex >= latestIndex {
+// 		//log.Println("不需发送同步通知")
+// 		return
+// 	}
 
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	log.Println(latestIndex)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+// 	log.Println(latestIndex)
 
-	syncInfo := &protocolClient.SyncInform{
-		SessionId:   sessionMap.SessionId,
-		LatestIndex: latestIndex,
-		ReadIndex:   sessionMap.ReadIndex,
-	}
+// 	syncInfo := &protocolClient.SyncInform{
+// 		SessionId:   sessionMap.SessionId,
+// 		LatestIndex: latestIndex,
+// 		ReadIndex:   sessionMap.ReadIndex,
+// 	}
 
-	SendProtoMessage(udpAddr, udpConn, protocolClient.MessageTypeSyncInform, syncInfo, connId, true)
-}
+// 	SendProtoMessage(udpAddr, udpConn, protocolClient.MessageTypeSyncInform, syncInfo, connId, true)
+// }
 
-func SendProtoMessage(udpAddr *net.UDPAddr, udpConn *net.UDPConn, messageType protocolClient.MessageType, message proto.Message, connId uint64, needWraper bool) error {
+// func SendProtoMessage(udpAddr *net.UDPAddr, udpConn *net.UDPConn, messageType protocolClient.MessageType, message proto.Message, connId uint64, needWraper bool) error {
 
-	buffer, err := protocolCoder.EncoderProtoMessage((int)(messageType), message)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+// 	buffer, err := protocolCoder.EncoderProtoMessage((int)(messageType), message)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return err
+// 	}
 
-	if needWraper {
-		//包装数据后返回
-		//log.Println("包装数据")
-		wraperMessage := &protocolServer.WraperMessage{
-			ConnId:  connId,
-			Message: buffer,
-		}
+// 	if needWraper {
+// 		//包装数据后返回
+// 		//log.Println("包装数据")
+// 		wraperMessage := &protocolServer.WraperMessage{
+// 			ConnId:  connId,
+// 			Message: buffer,
+// 		}
 
-		buffer, err = protocolCoder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-	}
+// 		buffer, err = protocolCoder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
+// 		if err != nil {
+// 			log.Println(err)
+// 			return err
+// 		}
+// 	}
 
-	count, err := udpConn.WriteTo(buffer, udpAddr)
+// 	count, err := udpConn.WriteTo(buffer, udpAddr)
 
-	if count != len(buffer) {
-		err = errors.New("写入数据失败")
-		log.Println(err)
-		return err
-	}
-	return nil
-}
+// 	if count != len(buffer) {
+// 		err = errors.New("写入数据失败")
+// 		log.Println(err)
+// 		return err
+// 	}
+// 	return nil
+// }

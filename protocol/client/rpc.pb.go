@@ -37,7 +37,7 @@ var RpcRequest_ToServerType_value = map[string]int32{
 func (x RpcRequest_ToServerType) String() string {
 	return proto.EnumName(RpcRequest_ToServerType_name, int32(x))
 }
-func (RpcRequest_ToServerType) EnumDescriptor() ([]byte, []int) { return fileDescriptor4, []int{0, 0} }
+func (RpcRequest_ToServerType) EnumDescriptor() ([]byte, []int) { return fileDescriptor3, []int{0, 0} }
 
 type RpcRequest struct {
 	Rid         uint64                  `protobuf:"varint,1,opt,name=rid" json:"rid,omitempty"`
@@ -51,7 +51,7 @@ type RpcRequest struct {
 func (m *RpcRequest) Reset()                    { *m = RpcRequest{} }
 func (m *RpcRequest) String() string            { return proto.CompactTextString(m) }
 func (*RpcRequest) ProtoMessage()               {}
-func (*RpcRequest) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
+func (*RpcRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
 
 func (m *RpcRequest) GetRid() uint64 {
 	if m != nil {
@@ -107,7 +107,7 @@ type RpcResponse struct {
 func (m *RpcResponse) Reset()                    { *m = RpcResponse{} }
 func (m *RpcResponse) String() string            { return proto.CompactTextString(m) }
 func (*RpcResponse) ProtoMessage()               {}
-func (*RpcResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
+func (*RpcResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
 
 func (m *RpcResponse) GetRid() uint64 {
 	if m != nil {
@@ -231,9 +231,9 @@ var _Rpc_serviceDesc = grpc.ServiceDesc{
 	Metadata: "rpc.proto",
 }
 
-func init() { proto.RegisterFile("rpc.proto", fileDescriptor4) }
+func init() { proto.RegisterFile("rpc.proto", fileDescriptor3) }
 
-var fileDescriptor4 = []byte{
+var fileDescriptor3 = []byte{
 	// 298 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x7c, 0x90, 0x4f, 0x6a, 0xeb, 0x30,
 	0x10, 0x87, 0xa3, 0x97, 0xc4, 0x24, 0x63, 0x27, 0x2f, 0x4c, 0x43, 0x11, 0xd9, 0x54, 0x78, 0xe5,

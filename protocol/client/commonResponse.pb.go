@@ -8,7 +8,6 @@ Package client is a generated protocol buffer package.
 It is generated from these files:
 	commonResponse.proto
 	login.proto
-	message.proto
 	registe.proto
 	rpc.proto
 	syncInform.proto
@@ -17,8 +16,6 @@ It has these top-level messages:
 	CommonResponse
 	DeviceLoginRequest
 	DeviceLoginResponse
-	CreateMessageRequest
-	CreateMessageResponse
 	DeviceRegisteRequest
 	DeviceRegisteResponse
 	RpcRequest

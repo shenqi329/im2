@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/golang/protobuf/proto"
 	grpcPb "im/grpc/pb"
+	"im/logicserver/uuid"
 	client "im/protocol/client"
 	"im/protocol/coder"
 	"log"
@@ -50,12 +51,13 @@ func connectToPort() {
 
 	go handleConnection(connect)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		{
 			pb := &grpcPb.CreateMessageRequest{
 				Rid:       getRid(),
 				SessionId: 32,
 				Type:      1,
+				Id:        uuid.Rand().Hex(),
 				Content:   "a message from push",
 			}
 			protoBuf, err := proto.Marshal(pb)

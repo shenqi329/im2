@@ -13,6 +13,12 @@ type Session struct{}
 
 func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
 
+	return CreateSession(ctx, request)
+
+}
+
+func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
+
 	log.Println("CreateSession")
 
 	protoMessage, err := service.HandleCreateSession(request)

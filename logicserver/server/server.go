@@ -154,7 +154,7 @@ func (s *Server) syncData(tokenConnInfoChan <-chan int64, connInfoChan <-chan *C
 				//log.Println(tokenId)
 				connInfo := s.tokenInfos[tokenId]
 				if connInfo != nil {
-					SendSyncInform(connInfo.UdpAddr, connInfo.UdpConn, connInfo.ConnId, connInfo.UserId)
+					//SendSyncInform(connInfo.UdpAddr, connInfo.UdpConn, connInfo.ConnId, connInfo.UserId)
 					log.Println("UserId", connInfo.UserId, "token", connInfo.Token)
 				}
 			}

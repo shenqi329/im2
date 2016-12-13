@@ -17,6 +17,7 @@ message CreateMessageRequest{
 	int64 sessionId = 11;	//会话id
  	int32 type = 12;		//消息类型
 	string Content = 13;	//消息的内容
+	string Id = 14;			//消息唯一id
 }
 
 message CreateMessageReply{

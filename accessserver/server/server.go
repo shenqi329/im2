@@ -21,14 +21,16 @@ import (
 type Request struct {
 	message      *coder.Message
 	protoMessage proto.Message
+	messageType  protocolClient.MessageType
 	connId       uint32
 	conn         *net.TCPConn
-	isLogin      bool
 }
 
 type ConnectInfo struct {
 	conn    *net.TCPConn
 	isLogin bool
+	token   string
+	userId  string
 }
 
 type Server struct {
@@ -157,7 +159,7 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 func (s *Server) transToRpcServer(rpcRequest *protocolClient.RpcRequest, rpcRespChan chan<- *protocolClient.RpcResponse) {
 	//easynote业务id
 	if rpcRequest.Type == protocolClient.RpcRequest_BusinessServer {
-		log.Println("转发给具体的业务服务器,appId = ", rpcRequest.AppId)
+		//log.Println("转发给具体的业务服务器,appId = ", rpcRequest.AppId)
 		if rpcRequest.AppId == "89897" {
 			rpcClient := protocolClient.NewRpcClient(s.grpcEasynoteClientConn)
 			reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
@@ -171,7 +173,7 @@ func (s *Server) transToRpcServer(rpcRequest *protocolClient.RpcRequest, rpcResp
 			rpcRespChan <- reply
 		}
 	} else if rpcRequest.Type == protocolClient.RpcRequest_LogicServer {
-		log.Println("转发给逻辑服务器")
+		//log.Println("转发给逻辑服务器")
 		rpcClient := protocolClient.NewRpcClient(s.grpcLogicClientConn)
 		reply, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
 		if err != nil {
@@ -179,7 +181,7 @@ func (s *Server) transToRpcServer(rpcRequest *protocolClient.RpcRequest, rpcResp
 			log.Println(err.Error())
 			return
 		}
-		log.Println(reply.String())
+		//log.Println(reply.String())
 		rpcRespChan <- reply
 	}
 }
@@ -232,10 +234,23 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 						conn:    req.conn,
 						isLogin: false,
 					}
+					if req.messageType == protocolClient.MessageTypeDeviceLoginRequest {
+						loginRequest, ok := req.protoMessage.(*protocolClient.DeviceLoginRequest)
+						if ok {
+							connInfo.token = loginRequest.Token
+							connInfo.userId = loginRequest.UserId
+						}
+					}
 					connMap[req.connId] = connInfo
 				}
 				if req.message.Type == protocolClient.MessageTypeRPCRequest {
 					//转发给具体的业务服务器
+					if !connInfo.isLogin {
+						log.Println("没有登录,不转发消息")
+						connInfo.conn.Close()
+						delete(connMap, req.connId)
+						break
+					}
 					rpcRequest, ok := req.protoMessage.(*protocolClient.RpcRequest)
 					if !ok {
 						break
@@ -249,7 +264,6 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 						Message:   req.message.Encode(),
 						IsLoginIn: connInfo.isLogin,
 					}
-
 					reqPkg, err := coder.EncoderProtoMessage(protocolServer.MessageTypeWraper, wraperMessage)
 					if err != nil {
 						log.Println(err)
@@ -293,6 +307,8 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 				connInfo := connMap[(uint32)(protoWraperMessage.ConnId)]
 				if protoWraperMessage.IsLoginIn {
 					connInfo.isLogin = true
+					connInfo.token = protoWraperMessage.Token
+					connInfo.userId = protoWraperMessage.UserId
 				} else if protoWraperMessage.IsLoginOut {
 					connInfo.isLogin = false
 				}

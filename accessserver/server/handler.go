@@ -25,6 +25,7 @@ func Handle(context Context) error {
 	//只检查消息的合法性,然后将消息转发出去
 	context.Request().message = context.Message()
 	context.Request().protoMessage = protoMessage
+	context.Request().messageType = (protocolClient.MessageType)(context.Message().Type)
 
 	context.ReqChan() <- context.Request()
 

@@ -22,7 +22,7 @@ type SyncInform struct {
 func (m *SyncInform) Reset()                    { *m = SyncInform{} }
 func (m *SyncInform) String() string            { return proto.CompactTextString(m) }
 func (*SyncInform) ProtoMessage()               {}
-func (*SyncInform) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
+func (*SyncInform) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
 
 func (m *SyncInform) GetSessionId() int64 {
 	if m != nil {
@@ -49,9 +49,9 @@ func init() {
 	proto.RegisterType((*SyncInform)(nil), "client.SyncInform")
 }
 
-func init() { proto.RegisterFile("syncInform.proto", fileDescriptor5) }
+func init() { proto.RegisterFile("syncInform.proto", fileDescriptor4) }
 
-var fileDescriptor5 = []byte{
+var fileDescriptor4 = []byte{
 	// 118 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0x12, 0x28, 0xae, 0xcc, 0x4b,
 	0xf6, 0xcc, 0x4b, 0xcb, 0x2f, 0xca, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4b, 0xce,

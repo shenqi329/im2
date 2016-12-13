@@ -2,11 +2,12 @@ syntax = "proto3";
 package client;
 
 message DeviceLoginRequest {
-	uint64 rid = 1;			//流水号
-	string token = 11;		//im系统的token
-    string appId = 12;      //分配个应用的id
-   	string deviceId = 13;   //设备的id
-   	string platform = 14;	//
+	uint64 Rid = 1;			//流水号
+	string Token = 11;		//im系统的token
+    string AppId = 12;      //分配个应用的id
+   	string DeviceId = 13;   //设备的id
+   	string Platform = 14;	//
+   	string UserId = 15;		//用户id
 }
 
 //messageType = 14
@@ -15,8 +16,6 @@ message DeviceLoginResponse {
 	string code = 2;	//回应的响应码
 	string desc = 3;	//回应码的描述
 }
-
-
 
 
 

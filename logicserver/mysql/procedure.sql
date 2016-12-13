@@ -10,21 +10,23 @@ show variables like '%max_connections%';
 show global status like 'Max_used_connections';
 set GLOBAL max_connections=1024;
 
-drop procedure if exists t_message_get_increment_index;
+drop procedure if exists t_message_insert;
 
 DELIMITER //
-create procedure t_message_get_increment_index(in session_id bigint(20), in type int(4) ,in context varchar(20000),in small_index bigint, out index_out bigint) 
+create procedure t_message_insert(in message_id varchar(40),in session_id bigint(20),in user_id varchar(40),in type int(4) ,in context varchar(20000),out index_out bigint) 
 begin 
+
 declare oldindex bigint; 
 start transaction; 
 select max(t_message_index) into oldindex from t_message where t_message_session_id=session_id for update; 
+
 if oldindex is NULL then 
-insert into t_message(t_message_session_id,t_message_type,t_message_content,t_message_index) value(session_id, type,context,small_index);
-set index_out=small_index; 
-else 
-insert into t_message(t_message_session_id,t_message_type,t_message_content,t_message_index) value(session_id, type,context,oldindex+1); 
-set index_out=oldindex+1;
+set oldindex = 0;
 end if;
+
+insert into t_message(t_message_id,t_message_session_id,t_message_user_id,t_message_type,t_message_content,t_message_index) value(message_id,session_id,user_id,type,context,oldindex+1);
+set index_out=oldindex+1;
+
 commit; 
 end;
 //

@@ -33,7 +33,6 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 		sessionMap := &logicserverBean.SessionMap{
 			SessionId: sessions[i].Id,
 			UserId:    request.CreateUserId,
-			ReadIndex: 0,
 		}
 		count, err = dao.NewDao().Insert(sessionMap)
 		if err != nil || count != 1 {

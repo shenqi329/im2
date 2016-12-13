@@ -2,8 +2,10 @@ syntax = "proto3";
 package bean;
 
 message WraperMessage{
-	uint64 connId = 1;		//连接id,用来唯一标识一个tcp连接
-	bytes message = 2;		//传输的消息内容
-	bool isLoginIn = 3;		//是否是登入
-	bool isLoginOut = 4;		//是否是登出
+	uint64 ConnId = 1;		//连接id,用来唯一标识一个tcp连接
+	bytes Message = 2;		//传输的消息内容
+	bool IsLoginIn = 3;		//是否是登入
+	bool IsLoginOut = 4;		//是否是登出
+	string Token = 5;		//登录的token
+	string UserId = 6;		//用户id
 }

@@ -7,7 +7,7 @@ import (
 	logicserverError "im/logicserver/error"
 	server "im/logicserver/server"
 	protocolClient "im/protocol/client"
-	"log"
+	//"log"
 	"strconv"
 	"time"
 )
@@ -70,7 +70,7 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 
 	c.ConnInfoChan() <- connInfo
 
-	go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
+	//go sendSyncInform(c, deviceLoginRequest, tokenBean.UserId)
 
 	protoMessage = &protocolClient.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
@@ -81,50 +81,50 @@ func HandleLogin(c server.Context, deviceLoginRequest *protocolClient.DeviceLogi
 	return
 }
 
-//发送同步通知
-func sendSyncInform(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
+// //发送同步通知
+// func sendSyncInform(c server.Context, deviceLoginRequest *protocolClient.DeviceLoginRequest, userId string) {
 
-	var sessionMaps []*logicserverBean.SessionMap
+// 	var sessionMaps []*logicserverBean.SessionMap
 
-	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
-		UserId: userId,
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
+// 	err := dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
+// 		UserId: userId,
+// 	})
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
 
-	for _, sessionMap := range sessionMaps {
-		sendSyncInformWithSessionMap(c, sessionMap)
-	}
-}
+// 	for _, sessionMap := range sessionMaps {
+// 		sendSyncInformWithSessionMap(c, sessionMap)
+// 	}
+// }
 
-func sendSyncInformWithSessionMap(c server.Context, sessionMap *logicserverBean.SessionMap) {
+// func sendSyncInformWithSessionMap(c server.Context, sessionMap *logicserverBean.SessionMap) {
 
-	var messages []*logicserverBean.Message
+// 	var messages []*logicserverBean.Message
 
-	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
-		SessionId: sessionMap.SessionId,
-	})
+// 	err := dao.NewDao().Find(&messages, &logicserverBean.Message{
+// 		SessionId: sessionMap.SessionId,
+// 	})
 
-	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
+// 	latestIndex, err := dao.MessageMaxIndex(sessionMap.SessionId)
 
-	if sessionMap.ReadIndex >= latestIndex {
-		//log.Println("不需发送同步通知")
-		return
-	}
+// 	if sessionMap.ReadIndex >= latestIndex {
+// 		//log.Println("不需发送同步通知")
+// 		return
+// 	}
 
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	log.Println(latestIndex)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+// 	log.Println(latestIndex)
 
-	syncInfo := &protocolClient.SyncInform{
-		SessionId:   sessionMap.SessionId,
-		LatestIndex: latestIndex,
-		ReadIndex:   sessionMap.ReadIndex,
-	}
+// 	syncInfo := &protocolClient.SyncInform{
+// 		SessionId:   sessionMap.SessionId,
+// 		LatestIndex: latestIndex,
+// 		ReadIndex:   sessionMap.ReadIndex,
+// 	}
 
-	c.SendProtoMessage(protocolClient.MessageTypeSyncInform, syncInfo)
-}
+// 	c.SendProtoMessage(protocolClient.MessageTypeSyncInform, syncInfo)
+// }

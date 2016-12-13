@@ -26,21 +26,22 @@ create table `t_session_map`(
     `t_session_map_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
     `t_session_map_session_id` bigint(20) NOT NULL ,
     `t_session_map_user_id` varchar(200) NOT NULL,
-  --   `t_session_map_read_index` bigint(20) NOT NULL,
 	PRIMARY KEY (`t_session_map_id`),
+    UNIQUE KEY `t_session_session_user` (`t_session_map_session_id`,`t_session_map_user_id`),
     FOREIGN KEY `t_session_map_session_id` (`t_session_map_session_id`) REFERENCES `t_session` (`t_session_id`) ON DELETE CASCADE ON UPDATE CASCADE
 )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='会话-用户映射表';
 
 drop table `t_message`;
 create table `t_message`(
     `t_message_id` varchar(40) NOT NULL COMMENT '主键',
+    `t_message_session_id` varchar(40) NOT NULL COMMENT '用户id',
     `t_message_user_id` varchar(40) NOT NULL COMMENT '用户id',
     `t_message_type` int(4) NOT NULL COMMENT '消息类型',
     `t_message_content` varchar(20000) NOT NULL COMMENT '消息内容',
     `t_message_index` bigint(20) NOT NULL,
     `t_message_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
     PRIMARY KEY (`t_message_id`),
-    UNIQUE KEY `t_message_index` (`t_message_index`)
+    UNIQUE KEY `t_message_user_message_index` (`t_message_user_id`,`t_message_index`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='消息表';
 
 -- drop table `t_message`;

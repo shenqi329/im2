@@ -20,7 +20,9 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, tokenConnInfoChan
 
 	timeNow := time.Now()
 	message := &logicserverBean.Message{
-		SessionId:  request.SessionId,
+		Id:        request.Id,
+		SessionId: request.SessionId,
+		//UserId:     request.UserId,
 		Type:       (int)(request.Type),
 		Content:    request.Content,
 		CreateTime: &timeNow,

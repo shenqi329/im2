@@ -13,6 +13,11 @@ type Message struct{}
 
 func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
 
+	return CreateMessage(context, request)
+
+}
+
+func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
 	log.Println("CreateMessage")
 
 	v := context.Value("tokenConnInfoChan")
