@@ -5,6 +5,7 @@ import (
 	netContext "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	accessError "im/accessserver/server/error"
 	grpcPb "im/logicserver/grpc/pb"
 	coder "im/protocol/coder"
 	"log"
@@ -19,7 +20,7 @@ type Request struct {
 	message      *coder.Message
 	protoMessage proto.Message
 	messageType  grpcPb.MessageType
-	connId       uint32
+	connId       uint64
 	conn         *net.TCPConn
 }
 
@@ -31,10 +32,11 @@ type ConnectInfo struct {
 }
 
 type Server struct {
-	rid       uint64 //请求流水号
-	ridMutex  sync.Mutex
-	connCount int32
-	connId    uint32 //请求的id
+	rid         uint64 //请求流水号
+	ridMutex    sync.Mutex
+	connCount   int32
+	connIdMutex sync.Mutex
+	connId      uint64 //请求的id
 
 	localTcpAddr string
 	proxyUdpAddr string
@@ -53,8 +55,11 @@ func (s *Server) createRID() uint64 {
 	return s.rid
 }
 
-func (s *Server) createConnId() uint32 {
-	return atomic.AddUint32(&s.connId, 1)
+func (s *Server) createConnId() uint64 {
+	s.connIdMutex.Lock()
+	s.connId++
+	s.connIdMutex.Unlock()
+	return s.connId
 }
 
 func NEWServer(localTcpAddr string, proxyUdpAddr string) (s *Server) {
@@ -137,7 +142,7 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 
 	//
 	reqChan := make(chan *Request, 1000)
-	closeChan := make(chan uint32, 1000)
+	closeChan := make(chan uint64, 1000)
 
 	go s.connectIMServer(reqChan, closeChan)
 
@@ -155,22 +160,40 @@ func (s *Server) ListenOnTcpPort(localTcpAddr string) {
 
 func (s *Server) transToLogicServer(rpcRequest *grpcPb.RpcRequest, protocolRespChan chan<- *ProtocolResp) {
 	//log.Println("转发给逻辑服务器")
+
 	rpcClient := grpcPb.NewRpcClient(s.grpcLogicClientConn)
 	response, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
+
 	if err != nil {
-		//直接返回错误给调用者[刘俊仕]
-		log.Println(err.Error())
+		s.sendErrorProtocolToChan(accessError.CommonInternalServerError, accessError.ErrorCodeToText(accessError.CommonInternalServerError), rpcRequest, protocolRespChan)
 		return
 	}
 
-	protocolBuf, err := coder.EncoderMessage((int)(response.MessageType), response.ProtoBuf)
-	if err != nil {
-		log.Println(err.Error())
+	if !accessError.CodeIsSuccess(response.Code) {
+		s.sendErrorProtocolToChan(response.Code, response.Desc, rpcRequest, protocolRespChan)
 		return
 	}
+
+	s.sendProtocolToChan((int)(response.MessageType), rpcRequest.ConnId, response.ProtoBuf, protocolRespChan)
+}
+
+func (s *Server) sendErrorProtocolToChan(code string, desc string, rpcRequest *grpcPb.RpcRequest, protocolRespChan chan<- *ProtocolResp) {
+	response := &grpcPb.Response{
+		Rid:  rpcRequest.Rid,
+		Code: code,
+		Desc: desc,
+	}
+	protocolBuf, _ := proto.Marshal(response)
+	s.sendProtocolToChan((int)(rpcRequest.MessageType+1), rpcRequest.ConnId, protocolBuf, protocolRespChan)
+}
+
+func (s *Server) sendProtocolToChan(messageType int, connId uint64, protocolBuf []byte, protocolRespChan chan<- *ProtocolResp) {
+
+	protocolBuf, _ = coder.EncoderMessage(messageType, protocolBuf)
+
 	protocolRespChan <- &ProtocolResp{
 		protocolBuf: protocolBuf,
-		connId:      (uint32)(rpcRequest.ConnId),
+		connId:      connId,
 	}
 }
 
@@ -192,15 +215,15 @@ func (s *Server) transToBusinessServer(rpcRequest *grpcPb.RpcRequest, rpcRespCha
 
 type ProtocolResp struct {
 	protocolBuf []byte
-	connId      uint32
+	connId      uint64
 }
 
 //连接到逻辑服务器
-func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint32) {
+func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint64) {
 
 	rpcRespChan := make(chan *grpcPb.RpcResponse, 1000)
 	protocolRespChan := make(chan *ProtocolResp, 1000)
-	connMap := make(map[uint32]*ConnectInfo)
+	connMap := make(map[uint64]*ConnectInfo)
 
 	for {
 		select {
@@ -263,7 +286,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 			}
 		case rpcResp := <-rpcRespChan:
 			{
-				connInfo := connMap[(uint32)(rpcResp.ConnId)]
+				connInfo := connMap[rpcResp.ConnId]
 				if connInfo == nil {
 					break
 				}
@@ -275,14 +298,14 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint3
 			}
 		case protocolBufChan := <-protocolRespChan:
 			{
-				connInfo := connMap[(uint32)(protocolBufChan.connId)]
+				connInfo := connMap[protocolBufChan.connId]
 				connInfo.conn.Write(protocolBufChan.protocolBuf)
 			}
 		}
 	}
 }
 
-func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request, closeChan chan<- uint32) {
+func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request, closeChan chan<- uint64) {
 
 	conn.SetKeepAlive(true)
 	conn.SetKeepAlivePeriod(10 * time.Second)
@@ -290,7 +313,7 @@ func (s *Server) handleTcpConnection(conn *net.TCPConn, reqChan chan<- *Request,
 	decoder := coder.NEWDecoder()
 
 	atomic.AddInt32(&s.connCount, 1)
-	connId := atomic.AddUint32(&s.connId, 1) //生成连接的id
+	connId := s.createConnId() //生成连接的id
 	log.Println("connCount=", s.connCount)
 
 	defer func() {

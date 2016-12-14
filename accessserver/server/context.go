@@ -11,7 +11,7 @@ type (
 		Request() *Request
 		Conn() *net.TCPConn
 		Message() *coder.Message
-		CloseChan() chan<- uint32
+		CloseChan() chan<- uint64
 		ReqChan() chan<- *Request
 		Close()
 	}
@@ -20,7 +20,7 @@ type (
 		request   *Request
 		conn      *net.TCPConn
 		message   *coder.Message
-		closeChan chan<- uint32
+		closeChan chan<- uint64
 		reqChan   chan<- *Request
 	}
 )
@@ -38,7 +38,7 @@ func (c *context) Message() *coder.Message {
 	return c.message
 }
 
-func (c *context) CloseChan() chan<- uint32 {
+func (c *context) CloseChan() chan<- uint64 {
 	return c.closeChan
 }
 func (c *context) ReqChan() chan<- *Request {

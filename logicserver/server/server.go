@@ -43,6 +43,7 @@ func (s *Server) grpcServerServe(addr string) {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+	log.Println("grpcServerServe addr:", addr)
 
 	reflection.Register(s.grpcServer)
 	if err := s.grpcServer.Serve(lis); err != nil {

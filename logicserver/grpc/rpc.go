@@ -8,6 +8,8 @@ import (
 	"log"
 )
 
+//protoc --go_out=plugins=grpc:. *.proto
+
 type Rpc struct{}
 
 func (m *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcResponse, error) {
