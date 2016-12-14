@@ -2,15 +2,15 @@ package service
 
 import (
 	//"github.com/golang/protobuf/proto"
-	grpcPb "im/grpc/pb"
 	logicserverBean "im/logicserver/bean"
 	dao "im/logicserver/dao"
 	logicserverError "im/logicserver/error"
+	grpcPb "im/logicserver/grpc/pb"
 	"log"
 	"time"
 )
 
-func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*grpcPb.CreateMessageReply, error) {
+func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*grpcPb.CreateMessageResponse, error) {
 
 	// index, err := dao.MessageMaxIndex(request.SessionId)
 	// if err != nil {
@@ -34,7 +34,7 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*
 		return nil, logicserverError.ErrorInternalServerError
 	}
 
-	response := &grpcPb.CreateMessageReply{
+	response := &grpcPb.CreateMessageResponse{
 		Rid:  (uint64)(request.Rid),
 		Code: logicserverError.CommonSuccess,
 		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),

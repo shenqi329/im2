@@ -3,21 +3,21 @@ package grpc
 import (
 	"golang.org/x/net/context"
 	//"google.golang.org/grpc"
-	grpcPb "im/grpc/pb"
 	imserverError "im/logicserver/error"
+	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
 	"log"
 )
 
 type Session struct{}
 
-func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
+func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
 
 	return CreateSession(ctx, request)
 
 }
 
-func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
+func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
 
 	log.Println("CreateSession")
 
@@ -25,7 +25,7 @@ func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*
 
 	if err != nil {
 		log.Println(err.Error())
-		reply := &grpcPb.CreateSessionReply{
+		reply := &grpcPb.CreateSessionResponse{
 			Rid:  request.GetRid(),
 			Code: imserverError.CommonInternalServerError,
 			Desc: imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),

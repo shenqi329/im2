@@ -1,0 +1,27 @@
+syntax = "proto3";
+package pb;
+
+// The greeting service definition.
+service Session {
+  // Sends a greeting
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse) {}
+}
+
+message SessionInfo{
+	uint64 SessionId = 1;
+}
+
+message CreateSessionRequest{
+	uint64 	Rid = 1;		//流水号
+	string  UserId = 2;		//用户id
+ 	string 	AppId = 11;		//app唯一标识
+	int32 	Count = 12;		//创建的个数	
+}
+
+
+message CreateSessionResponse{
+	uint64 	Rid = 1;	//流水号
+	string 	Code = 2;	//回应的响应码
+	string 	Desc = 3;	//回应码的描述
+	repeated SessionInfo SessionIds = 11;
+}

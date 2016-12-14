@@ -5,26 +5,25 @@ import (
 	imserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
-	//"im/logicserver/util/key"
 	"log"
 )
 
-type Login struct{}
+type Registe struct{}
 
-func (m *Login) Login(ctx context.Context, request *grpcPb.DeviceLoginRequest) (*grpcPb.DeviceLoginResponse, error) {
+func (r *Registe) Registe(ctx context.Context, request *grpcPb.DeviceRegisteRequest) (*grpcPb.DeviceRegisteResponse, error) {
 
-	return HandleLogin(ctx, request)
+	return HandleRegiste(ctx, request)
 
 }
 
-func HandleLogin(ctx context.Context, request *grpcPb.DeviceLoginRequest) (*grpcPb.DeviceLoginResponse, error) {
+func HandleRegiste(ctx context.Context, request *grpcPb.DeviceRegisteRequest) (*grpcPb.DeviceRegisteResponse, error) {
 	log.Println("Login")
 
-	protoMessage, err := service.HandleLogin(request)
+	protoMessage, err := service.HandleRegiste(request)
 
 	if err != nil {
 		log.Println(err.Error())
-		reply := &grpcPb.DeviceLoginResponse{
+		reply := &grpcPb.DeviceRegisteResponse{
 			Rid:  request.GetRid(),
 			Code: imserverError.CommonInternalServerError,
 			Desc: imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),

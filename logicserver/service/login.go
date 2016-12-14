@@ -4,12 +4,12 @@ import (
 	logicserverBean "im/logicserver/bean"
 	dao "im/logicserver/dao"
 	logicserverError "im/logicserver/error"
-	protocolClient "im/protocol/client"
+	grpcPb "im/logicserver/grpc/pb"
 	"strconv"
 	"time"
 )
 
-func HandleLogin(deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMessage *protocolClient.DeviceLoginResponse, err error) {
+func HandleLogin(deviceLoginRequest *grpcPb.DeviceLoginRequest) (protoMessage *grpcPb.DeviceLoginResponse, err error) {
 
 	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
 
@@ -22,7 +22,7 @@ func HandleLogin(deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMe
 	has, err := dao.NewDao().Get(tokenBean)
 
 	if err != nil {
-		protoMessage = &protocolClient.DeviceLoginResponse{
+		protoMessage = &grpcPb.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
 			Code: logicserverError.CommonInternalServerError,
 			Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
@@ -30,7 +30,7 @@ func HandleLogin(deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMe
 		return
 	}
 	if !has {
-		protoMessage = &protocolClient.DeviceLoginResponse{
+		protoMessage = &grpcPb.DeviceLoginResponse{
 			Rid:  deviceLoginRequest.Rid,
 			Code: logicserverError.CommonResourceNoExist,
 			Desc: logicserverError.ErrorCodeToText(logicserverError.CommonResourceNoExist),
@@ -43,7 +43,7 @@ func HandleLogin(deviceLoginRequest *protocolClient.DeviceLoginRequest) (protoMe
 		tokenBean.LoginTime = &timeNow
 	}
 
-	protoMessage = &protocolClient.DeviceLoginResponse{
+	protoMessage = &grpcPb.DeviceLoginResponse{
 		Rid:  deviceLoginRequest.Rid,
 		Code: logicserverError.CommonSuccess,
 		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),

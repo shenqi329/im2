@@ -2,9 +2,8 @@ package grpc
 
 import (
 	"golang.org/x/net/context"
-	//"google.golang.org/grpc"
-	grpcPb "im/grpc/pb"
 	imserverError "im/logicserver/error"
+	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
 	"im/logicserver/util/key"
 	"log"
@@ -12,13 +11,13 @@ import (
 
 type Message struct{}
 
-func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
+func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageResponse, error) {
 
 	return CreateMessage(context, request)
 
 }
 
-func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageReply, error) {
+func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageResponse, error) {
 	log.Println("CreateMessage")
 
 	//tokenConnInfoChan := context.Value(key.TokenConnInfoChan).(chan int64)
@@ -28,7 +27,7 @@ func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest
 
 	if err != nil {
 		log.Println(err.Error())
-		reply := &grpcPb.CreateMessageReply{
+		reply := &grpcPb.CreateMessageResponse{
 			Rid:  request.GetRid(),
 			Code: imserverError.CommonInternalServerError,
 			Desc: imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),

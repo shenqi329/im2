@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/golang/protobuf/proto"
-	protocolClient "im/protocol/client"
+	grpcPb "im/logicserver/grpc/pb"
 	"im/protocol/coder"
 	"log"
 	"net"
@@ -55,7 +55,7 @@ func (c *Client) LoginToAccessServer() {
 
 	for i := 0; i < 1; i++ {
 		if runtime.GOOS == "windows" {
-			loginRequest := &protocolClient.DeviceLoginRequest{
+			loginRequest := &grpcPb.DeviceLoginRequest{
 				Rid:      c.GetRid(),
 				Token:    "1",
 				UserId:   "1",
@@ -63,13 +63,13 @@ func (c *Client) LoginToAccessServer() {
 				DeviceId: "024b36dc22425556bc01605d438f4d0c",
 				Platform: "windows",
 			}
-			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeDeviceLoginRequest, loginRequest)
+			buffer, err := coder.EncoderProtoMessage(grpcPb.MessageTypeDeviceLoginRequest, loginRequest)
 			if err != nil {
 				log.Println(err.Error())
 			}
 			connect.Write(buffer)
 		} else {
-			loginRequest := &protocolClient.DeviceLoginRequest{
+			loginRequest := &grpcPb.DeviceLoginRequest{
 				Rid:      c.GetRid(),
 				Token:    "1",
 				UserId:   "1",
@@ -78,7 +78,7 @@ func (c *Client) LoginToAccessServer() {
 				Platform: "windows",
 			}
 
-			buffer, err := coder.EncoderProtoMessage(protocolClient.MessageTypeDeviceLoginRequest, loginRequest)
+			buffer, err := coder.EncoderProtoMessage(grpcPb.MessageTypeDeviceLoginRequest, loginRequest)
 			if err != nil {
 				log.Println(err.Error())
 			}
@@ -110,7 +110,7 @@ func (c *Client) handleConnection(conn *net.TCPConn) {
 
 func (c *Client) handleMessage(conn *net.TCPConn, message *coder.Message) {
 
-	protoMessage := protocolClient.Factory((protocolClient.MessageType)(message.Type))
+	protoMessage := grpcPb.Factory((grpcPb.MessageType)(message.Type))
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")
@@ -126,7 +126,8 @@ func (c *Client) handleMessage(conn *net.TCPConn, message *coder.Message) {
 	}
 	c.recvCount++
 	log.Println("recvMsg count = ", c.recvCount, "context:", proto.CompactTextString(protoMessage))
-	if (protocolClient.MessageType)(message.Type) == protocolClient.MessageTypeDeviceLoginResponse {
+	if (grpcPb.MessageType)(message.Type) == grpcPb.MessageTypeDeviceLoginResponse {
+		log.Println("....")
 		c.loginState = 1
 		go c.afterLogin(c)
 	}

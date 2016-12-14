@@ -1,9 +1,0 @@
-syntax = "proto3";
-package client;
-
-
-message SyncInform{
-	int64 sessionId = 11;	//会话id
-	int64 latestIndex = 12;	//最新的index
-	int64 readIndex = 13;	//设备id
-}

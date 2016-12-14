@@ -3,17 +3,16 @@ package grpc
 import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	grpcPb "im/grpc/pb"
 	imserverError "im/logicserver/error"
-	protocolClient "im/protocol/client"
+	grpcPb "im/logicserver/grpc/pb"
 	"log"
 )
 
 type Rpc struct{}
 
-func (m *Rpc) Rpc(ctx context.Context, request *protocolClient.RpcRequest) (*protocolClient.RpcResponse, error) {
+func (m *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcResponse, error) {
 
-	rpcResponse := &protocolClient.RpcResponse{
+	rpcResponse := &grpcPb.RpcResponse{
 		Rid:    request.GetRid(),
 		Code:   imserverError.CommonInternalServerError,
 		Desc:   imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),
@@ -31,26 +30,50 @@ func (m *Rpc) Rpc(ctx context.Context, request *protocolClient.RpcRequest) (*pro
 		return rpcResponse, nil
 	}
 
-	if request.MessageType == grpcPb.MessageTypeCreateMessageRequest {
+	if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
 
-		reply, err := CreateMessage(ctx, protoMessage.(*grpcPb.CreateMessageRequest))
+		response, err := HandleLogin(ctx, protoMessage.(*grpcPb.DeviceLoginRequest))
 		if err != nil {
 			log.Println(err.Error())
 			return rpcResponse, nil
 		}
-		protoBuf, err := proto.Marshal(reply)
+		protoBuf, err := proto.Marshal(response)
 		if err != nil {
 			log.Println(err.Error())
 			return rpcResponse, nil
 		}
-		rpcResponse = &protocolClient.RpcResponse{
+		rpcResponse = &grpcPb.RpcResponse{
 			Rid:         request.GetRid(),
-			Code:        reply.Code,
-			Desc:        reply.Desc,
-			MessageType: grpcPb.MessageTypeCreateMessageReply,
+			Code:        response.Code,
+			Desc:        response.Desc,
+			MessageType: grpcPb.MessageTypeDeviceLoginResponse,
 			ProtoBuf:    protoBuf,
 			ConnId:      request.ConnId,
 		}
+
+	} else if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
+
+	} else if request.MessageType == grpcPb.MessageTypeCreateMessageRequest {
+
+		response, err := CreateMessage(ctx, protoMessage.(*grpcPb.CreateMessageRequest))
+		if err != nil {
+			log.Println(err.Error())
+			return rpcResponse, nil
+		}
+		protoBuf, err := proto.Marshal(response)
+		if err != nil {
+			log.Println(err.Error())
+			return rpcResponse, nil
+		}
+		rpcResponse = &grpcPb.RpcResponse{
+			Rid:         request.GetRid(),
+			Code:        response.Code,
+			Desc:        response.Desc,
+			MessageType: grpcPb.MessageTypeCreateMessageResponse,
+			ProtoBuf:    protoBuf,
+			ConnId:      request.ConnId,
+		}
+
 	} else if request.MessageType == grpcPb.MessageTypeCreateSessionRequest {
 
 	}

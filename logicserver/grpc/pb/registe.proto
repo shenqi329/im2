@@ -3,11 +3,11 @@ package pb;
 
 service Registe {
   // Sends a greeting
-  rpc Login (DeviceRegisteRequest) returns (DeviceRegisteResponse) {}
+  rpc Registe (DeviceRegisteRequest) returns (DeviceRegisteResponse) {}
 }
 
 message DeviceRegisteRequest{
-	uint64 Rid = 1;	//流水号
+	uint64 Rid = 1;			//流水号
 	string SsoToken = 11;	//统一登陆系统登陆token
 	string AppId = 12;		//应用id
 	string DeviceId = 13;	//设备id

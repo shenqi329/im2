@@ -2,19 +2,18 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
 	logicserverBean "im/logicserver/bean"
 	dao "im/logicserver/dao"
 	logicserverError "im/logicserver/error"
+	grpcPb "im/logicserver/grpc/pb"
 	logicserverResponse "im/logicserver/response"
-	protocolClient "im/protocol/client"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) error {
+func CheckDeviceRegistReqeust(deviceRegisteRequest *grpcPb.DeviceRegisteRequest) error {
 
 	if err := CheckDeviceId(deviceRegisteRequest.DeviceId); err != nil {
 		return err
@@ -27,7 +26,7 @@ func CheckDeviceRegistReqeust(deviceRegisteRequest *protocolClient.DeviceRegiste
 	return nil
 }
 
-func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (protoMessage proto.Message, err error) {
+func HandleRegiste(deviceRegisteRequest *grpcPb.DeviceRegisteRequest) (protoMessage *grpcPb.DeviceRegisteResponse, err error) {
 
 	if err = CheckDeviceRegistReqeust(deviceRegisteRequest); err != nil {
 		return
@@ -77,7 +76,7 @@ func HandleRegiste(deviceRegisteRequest *protocolClient.DeviceRegisteRequest) (p
 		return
 	}
 
-	protoMessage = &protocolClient.DeviceRegisteResponse{
+	protoMessage = &grpcPb.DeviceRegisteResponse{
 		Rid:   deviceRegisteRequest.Rid,
 		Code:  logicserverError.CommonSuccess,
 		Desc:  logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),

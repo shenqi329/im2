@@ -1,4 +1,4 @@
-package client
+package pb
 
 import (
 	proto "github.com/golang/protobuf/proto"
@@ -11,17 +11,23 @@ const (
 	MessageTypeDeviceRegisteResponse = 2
 	MessageTypeDeviceLoginRequest    = 3
 	MessageTypeDeviceLoginResponse   = 4
-	MessageTypeSyncInform            = 5
-	MessageTypeRPCRequest            = 6
-	MessageTypeRPCResponse           = 7
+	MessageTypeCreateMessageRequest  = 5
+	MessageTypeCreateMessageResponse = 6
+	MessageTypeCreateSessionRequest  = 7
+	MessageTypeCreateSessionResponse = 8
+	MessageTypeRPCRequest            = 9
+	MessageTypeRPCResponse           = 10
 )
 
 var kinds = map[MessageType]func() proto.Message{
-	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
-	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },
+	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceLoginRequest{} },
+	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceLoginResponse{} },
 	MessageTypeDeviceLoginRequest:    func() proto.Message { return &DeviceLoginRequest{} },
 	MessageTypeDeviceLoginResponse:   func() proto.Message { return &DeviceLoginResponse{} },
-	MessageTypeSyncInform:            func() proto.Message { return &SyncInform{} },
+	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
+	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
+	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
+	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
 	MessageTypeRPCRequest:            func() proto.Message { return &RpcRequest{} },
 	MessageTypeRPCResponse:           func() proto.Message { return &RpcResponse{} },
 }

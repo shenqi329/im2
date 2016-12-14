@@ -1,35 +1,23 @@
 package main
 
 import (
-	grpcPb "im/grpc/pb"
-	"im/logicserver/controller"
 	logicserverGrpc "im/logicserver/grpc"
+	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/server"
-	protocolClient "im/protocol/client"
 	"log"
-	"runtime"
+	//"runtime"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	var localUdpAddr string
-	if runtime.GOOS == "windows" {
-		localUdpAddr = "localhost:6001"
-	} else {
-		localUdpAddr = "localhost:6001"
-	}
-
 	s := server.NEWServer()
 
-	s.Handle(protocolClient.MessageTypeDeviceRegisteRequest, controller.HandleRegiste)
-	s.Handle(protocolClient.MessageTypeDeviceLoginRequest, controller.HandleLogin)
-
+	grpcPb.RegisterRegisteServer(s.GrpcServer(), &logicserverGrpc.Registe{})
+	grpcPb.RegisterLoginServer(s.GrpcServer(), &logicserverGrpc.Login{})
 	grpcPb.RegisterSessionServer(s.GrpcServer(), &logicserverGrpc.Session{})
 	grpcPb.RegisterMessageServer(s.GrpcServer(), &logicserverGrpc.Message{})
-	// grpcPb.RegisterLoginServer(s.GrpcServer(), &logicserverGrpc.Login{})
-	// grpcPb.RegisterRegisteServer(s.GrpcServer(), &logicserverGrpc.Registe{})
-	protocolClient.RegisterRpcServer(s.GrpcServer(), &logicserverGrpc.Rpc{})
+	grpcPb.RegisterRpcServer(s.GrpcServer(), &logicserverGrpc.Rpc{})
 
-	s.Run(localUdpAddr, "localhost:6005")
+	s.Run("localhost:6005")
 }

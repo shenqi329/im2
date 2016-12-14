@@ -32,8 +32,11 @@ end;
 //
 DELIMITER ;
 
-
+select * from t_message order by t_message_index desc limit 1000;
+select count(t_message_index) from t_message;
 select * from t_message order by t_message_index desc limit 1;
+
+
 SET SQL_SAFE_UPDATES = 0;
 
 -- SET @p_out=1; 

@@ -2,14 +2,14 @@ package service
 
 import (
 	//"github.com/golang/protobuf/proto"
-	grpcPb "im/grpc/pb"
 	logicserverBean "im/logicserver/bean"
 	dao "im/logicserver/dao"
 	logicserverError "im/logicserver/error"
+	grpcPb "im/logicserver/grpc/pb"
 	"log"
 )
 
-func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionReply, error) {
+func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
 
 	log.Println(request.String())
 
@@ -23,7 +23,7 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 	for i := 0; i < (int)(request.Count); i++ {
 		sessions[i] = &logicserverBean.Session{
 			AppId:        request.AppId,
-			CreateUserId: request.CreateUserId,
+			CreateUserId: request.UserId,
 		}
 		count, err := dao.NewDao().Insert(sessions[i])
 		if err != nil || count != 1 {
@@ -32,7 +32,7 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 		}
 		sessionMap := &logicserverBean.SessionMap{
 			SessionId: sessions[i].Id,
-			UserId:    request.CreateUserId,
+			UserId:    request.UserId,
 		}
 		count, err = dao.NewDao().Insert(sessionMap)
 		if err != nil || count != 1 {
@@ -49,7 +49,7 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSe
 		}
 	}
 
-	response := &grpcPb.CreateSessionReply{
+	response := &grpcPb.CreateSessionResponse{
 		Rid:        (uint64)(request.Rid),
 		Code:       logicserverError.CommonSuccess,
 		Desc:       logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),

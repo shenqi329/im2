@@ -11,3 +11,5 @@ accessserver/client/loginClient
 accessserver/client/loginClient
 
 accessserver/accessserver
+
+logicserver/main
