@@ -4,6 +4,9 @@ import (
 	netContext "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	logicserverError "im/logicserver/error"
+	logicserverGrpc "im/logicserver/grpc"
+	grpcPb "im/logicserver/grpc/pb"
 	"log"
 	"net"
 )
@@ -32,7 +35,18 @@ func (s *Server) newServer() *grpc.Server {
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		//log.Println("设置环境变量")
-		return handler(ctx, req)
+		reply, err := handler(ctx, req)
+		if reply == nil {
+			request, ok := req.(logicserverGrpc.Request)
+			if ok {
+				reply = &grpcPb.Response{
+					Rid:  request.GetRid(),
+					Code: logicserverError.CommonInternalServerError,
+					Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
+				}
+			}
+		}
+		return reply, nil
 	}))
 	return grpcServer
 }

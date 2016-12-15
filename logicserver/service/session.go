@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func HandleCreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb.CreateSessionResponse, error) {
+func CreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb.CreateSessionResponse, error) {
 
 	log.Println(request.String())
 
@@ -34,10 +34,10 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest, userId string) (*
 		return nil, err
 	}
 
-	for i := 0; i < len(request.SessionUsers); i++ {
+	for i := 0; i < len(request.UserIds); i++ {
 		sessionMap := &logicserverBean.SessionMap{
 			SessionId: session.Id,
-			UserId:    request.SessionUsers[i].UserId,
+			UserId:    request.UserIds[i],
 		}
 		count, err = dao.NewDao().Insert(sessionMap)
 		if err != nil || count != 1 {
@@ -47,13 +47,23 @@ func HandleCreateSession(request *grpcPb.CreateSessionRequest, userId string) (*
 	}
 
 	response := &grpcPb.CreateSessionResponse{
-		Rid:  (uint64)(request.Rid),
-		Code: logicserverError.CommonSuccess,
-		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
-		Session: &grpcPb.SessionInfo{
-			SessionId: (uint64)(session.Id),
-		},
+		Rid:       (uint64)(request.Rid),
+		Code:      logicserverError.CommonSuccess,
+		Desc:      logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
+		SessionId: (uint64)(session.Id),
 	}
 
 	return response, nil
+}
+
+func DeleteSessionUsers(request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Response, error) {
+
+	log.Println(request.String())
+
+	return nil, nil
+}
+
+func AddSessionUsers(request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
+
+	return nil, nil
 }

@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"golang.org/x/net/context"
-	imserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
 	"im/logicserver/util/key"
@@ -12,9 +11,15 @@ import (
 type Session struct{}
 
 func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
-
 	return CreateSession(ctx, request)
+}
 
+func (s *Session) DeleteUsers(ctx context.Context, request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Response, error) {
+	return DeleteSessionUsers(ctx, request)
+}
+
+func (s *Session) AddUsers(ctx context.Context, request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
+	return nil, nil
 }
 
 func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
@@ -22,17 +27,23 @@ func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*
 	log.Println("CreateSession")
 	userId := ctx.Value(key.UserId).(string)
 
-	protoMessage, err := service.HandleCreateSession(request, userId)
+	protoMessage, err := service.CreateSession(request, userId)
 
-	if err != nil {
-		log.Println(err.Error())
-		reply := &grpcPb.CreateSessionResponse{
-			Rid:  request.GetRid(),
-			Code: imserverError.CommonInternalServerError,
-			Desc: imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),
-		}
-		return reply, nil
-	}
+	return protoMessage, err
+}
 
-	return protoMessage, nil
+func DeleteSessionUsers(ctx context.Context, request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Response, error) {
+
+	log.Println("DeleteSessionUsers")
+	protoMessage, err := service.DeleteSessionUsers(request)
+
+	return protoMessage, err
+}
+
+func AddSessionUsers(ctx context.Context, request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
+
+	log.Println("AddSessionUsers")
+	protoMessage, err := service.AddSessionUsers(request)
+
+	return protoMessage, err
 }

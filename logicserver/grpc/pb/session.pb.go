@@ -18,48 +18,16 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-type SessionInfo struct {
-	SessionId uint64 `protobuf:"varint,1,opt,name=SessionId" json:"SessionId,omitempty"`
-}
-
-func (m *SessionInfo) Reset()                    { *m = SessionInfo{} }
-func (m *SessionInfo) String() string            { return proto.CompactTextString(m) }
-func (*SessionInfo) ProtoMessage()               {}
-func (*SessionInfo) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{0} }
-
-func (m *SessionInfo) GetSessionId() uint64 {
-	if m != nil {
-		return m.SessionId
-	}
-	return 0
-}
-
-type SessionUserInfo struct {
-	UserId string `protobuf:"bytes,1,opt,name=UserId" json:"UserId,omitempty"`
-}
-
-func (m *SessionUserInfo) Reset()                    { *m = SessionUserInfo{} }
-func (m *SessionUserInfo) String() string            { return proto.CompactTextString(m) }
-func (*SessionUserInfo) ProtoMessage()               {}
-func (*SessionUserInfo) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{1} }
-
-func (m *SessionUserInfo) GetUserId() string {
-	if m != nil {
-		return m.UserId
-	}
-	return ""
-}
-
 type CreateSessionRequest struct {
-	Rid          uint64             `protobuf:"varint,1,opt,name=Rid" json:"Rid,omitempty"`
-	AppId        string             `protobuf:"bytes,11,opt,name=AppId" json:"AppId,omitempty"`
-	SessionUsers []*SessionUserInfo `protobuf:"bytes,12,rep,name=SessionUsers" json:"SessionUsers,omitempty"`
+	Rid     uint64   `protobuf:"varint,1,opt,name=Rid,json=rid" json:"Rid,omitempty"`
+	AppId   string   `protobuf:"bytes,11,opt,name=AppId,json=appId" json:"AppId,omitempty"`
+	UserIds []string `protobuf:"bytes,12,rep,name=UserIds,json=userIds" json:"UserIds,omitempty"`
 }
 
 func (m *CreateSessionRequest) Reset()                    { *m = CreateSessionRequest{} }
 func (m *CreateSessionRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateSessionRequest) ProtoMessage()               {}
-func (*CreateSessionRequest) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{2} }
+func (*CreateSessionRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
 
 func (m *CreateSessionRequest) GetRid() uint64 {
 	if m != nil {
@@ -75,24 +43,24 @@ func (m *CreateSessionRequest) GetAppId() string {
 	return ""
 }
 
-func (m *CreateSessionRequest) GetSessionUsers() []*SessionUserInfo {
+func (m *CreateSessionRequest) GetUserIds() []string {
 	if m != nil {
-		return m.SessionUsers
+		return m.UserIds
 	}
 	return nil
 }
 
 type CreateSessionResponse struct {
-	Rid     uint64       `protobuf:"varint,1,opt,name=Rid" json:"Rid,omitempty"`
-	Code    string       `protobuf:"bytes,2,opt,name=Code" json:"Code,omitempty"`
-	Desc    string       `protobuf:"bytes,3,opt,name=Desc" json:"Desc,omitempty"`
-	Session *SessionInfo `protobuf:"bytes,11,opt,name=Session" json:"Session,omitempty"`
+	Rid       uint64 `protobuf:"varint,1,opt,name=Rid,json=rid" json:"Rid,omitempty"`
+	Code      string `protobuf:"bytes,2,opt,name=Code,json=code" json:"Code,omitempty"`
+	Desc      string `protobuf:"bytes,3,opt,name=Desc,json=desc" json:"Desc,omitempty"`
+	SessionId uint64 `protobuf:"varint,11,opt,name=SessionId,json=sessionId" json:"SessionId,omitempty"`
 }
 
 func (m *CreateSessionResponse) Reset()                    { *m = CreateSessionResponse{} }
 func (m *CreateSessionResponse) String() string            { return proto.CompactTextString(m) }
 func (*CreateSessionResponse) ProtoMessage()               {}
-func (*CreateSessionResponse) Descriptor() ([]byte, []int) { return fileDescriptor5, []int{3} }
+func (*CreateSessionResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
 
 func (m *CreateSessionResponse) GetRid() uint64 {
 	if m != nil {
@@ -115,18 +83,82 @@ func (m *CreateSessionResponse) GetDesc() string {
 	return ""
 }
 
-func (m *CreateSessionResponse) GetSession() *SessionInfo {
+func (m *CreateSessionResponse) GetSessionId() uint64 {
 	if m != nil {
-		return m.Session
+		return m.SessionId
+	}
+	return 0
+}
+
+type DeleteSessionUsersRequest struct {
+	Rid           uint64   `protobuf:"varint,1,opt,name=Rid,json=rid" json:"Rid,omitempty"`
+	SessionId     uint64   `protobuf:"varint,11,opt,name=SessionId,json=sessionId" json:"SessionId,omitempty"`
+	DeleteUserIds []string `protobuf:"bytes,12,rep,name=DeleteUserIds,json=deleteUserIds" json:"DeleteUserIds,omitempty"`
+}
+
+func (m *DeleteSessionUsersRequest) Reset()                    { *m = DeleteSessionUsersRequest{} }
+func (m *DeleteSessionUsersRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteSessionUsersRequest) ProtoMessage()               {}
+func (*DeleteSessionUsersRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{2} }
+
+func (m *DeleteSessionUsersRequest) GetRid() uint64 {
+	if m != nil {
+		return m.Rid
+	}
+	return 0
+}
+
+func (m *DeleteSessionUsersRequest) GetSessionId() uint64 {
+	if m != nil {
+		return m.SessionId
+	}
+	return 0
+}
+
+func (m *DeleteSessionUsersRequest) GetDeleteUserIds() []string {
+	if m != nil {
+		return m.DeleteUserIds
+	}
+	return nil
+}
+
+type AddSessionUsersRequest struct {
+	Rid        uint64   `protobuf:"varint,1,opt,name=Rid,json=rid" json:"Rid,omitempty"`
+	SessionId  uint64   `protobuf:"varint,11,opt,name=SessionId,json=sessionId" json:"SessionId,omitempty"`
+	AddUserIds []string `protobuf:"bytes,12,rep,name=AddUserIds,json=addUserIds" json:"AddUserIds,omitempty"`
+}
+
+func (m *AddSessionUsersRequest) Reset()                    { *m = AddSessionUsersRequest{} }
+func (m *AddSessionUsersRequest) String() string            { return proto.CompactTextString(m) }
+func (*AddSessionUsersRequest) ProtoMessage()               {}
+func (*AddSessionUsersRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{3} }
+
+func (m *AddSessionUsersRequest) GetRid() uint64 {
+	if m != nil {
+		return m.Rid
+	}
+	return 0
+}
+
+func (m *AddSessionUsersRequest) GetSessionId() uint64 {
+	if m != nil {
+		return m.SessionId
+	}
+	return 0
+}
+
+func (m *AddSessionUsersRequest) GetAddUserIds() []string {
+	if m != nil {
+		return m.AddUserIds
 	}
 	return nil
 }
 
 func init() {
-	proto.RegisterType((*SessionInfo)(nil), "pb.SessionInfo")
-	proto.RegisterType((*SessionUserInfo)(nil), "pb.SessionUserInfo")
 	proto.RegisterType((*CreateSessionRequest)(nil), "pb.CreateSessionRequest")
 	proto.RegisterType((*CreateSessionResponse)(nil), "pb.CreateSessionResponse")
+	proto.RegisterType((*DeleteSessionUsersRequest)(nil), "pb.DeleteSessionUsersRequest")
+	proto.RegisterType((*AddSessionUsersRequest)(nil), "pb.AddSessionUsersRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -140,8 +172,10 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Session service
 
 type SessionClient interface {
-	// Sends a greeting
+	// 创建会话
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*CreateSessionResponse, error)
+	DeleteUsers(ctx context.Context, in *DeleteSessionUsersRequest, opts ...grpc.CallOption) (*Response, error)
+	AddUsers(ctx context.Context, in *AddSessionUsersRequest, opts ...grpc.CallOption) (*Response, error)
 }
 
 type sessionClient struct {
@@ -161,11 +195,31 @@ func (c *sessionClient) CreateSession(ctx context.Context, in *CreateSessionRequ
 	return out, nil
 }
 
+func (c *sessionClient) DeleteUsers(ctx context.Context, in *DeleteSessionUsersRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := grpc.Invoke(ctx, "/pb.Session/DeleteUsers", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sessionClient) AddUsers(ctx context.Context, in *AddSessionUsersRequest, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := grpc.Invoke(ctx, "/pb.Session/AddUsers", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Session service
 
 type SessionServer interface {
-	// Sends a greeting
+	// 创建会话
 	CreateSession(context.Context, *CreateSessionRequest) (*CreateSessionResponse, error)
+	DeleteUsers(context.Context, *DeleteSessionUsersRequest) (*Response, error)
+	AddUsers(context.Context, *AddSessionUsersRequest) (*Response, error)
 }
 
 func RegisterSessionServer(s *grpc.Server, srv SessionServer) {
@@ -190,6 +244,42 @@ func _Session_CreateSession_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Session_DeleteUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSessionUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).DeleteUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Session/DeleteUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).DeleteUsers(ctx, req.(*DeleteSessionUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Session_AddUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSessionUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).AddUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Session/AddUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).AddUsers(ctx, req.(*AddSessionUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Session_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.Session",
 	HandlerType: (*SessionServer)(nil),
@@ -198,29 +288,40 @@ var _Session_serviceDesc = grpc.ServiceDesc{
 			MethodName: "CreateSession",
 			Handler:    _Session_CreateSession_Handler,
 		},
+		{
+			MethodName: "DeleteUsers",
+			Handler:    _Session_DeleteUsers_Handler,
+		},
+		{
+			MethodName: "AddUsers",
+			Handler:    _Session_AddUsers_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "session.proto",
 }
 
-func init() { proto.RegisterFile("session.proto", fileDescriptor5) }
+func init() { proto.RegisterFile("session.proto", fileDescriptor6) }
 
-var fileDescriptor5 = []byte{
-	// 246 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x51, 0xc1, 0x4a, 0xc3, 0x40,
-	0x10, 0xb5, 0x4d, 0xad, 0x74, 0xd2, 0x52, 0x19, 0xab, 0xac, 0xe2, 0xa1, 0xec, 0xa9, 0x45, 0xc8,
-	0x21, 0x1e, 0x3c, 0x4b, 0x45, 0xe8, 0xd1, 0x15, 0x3f, 0xc0, 0x98, 0x11, 0x7a, 0xc9, 0xae, 0x99,
-	0x88, 0x17, 0x3f, 0x5e, 0x76, 0x76, 0x63, 0xdb, 0x90, 0xdb, 0x7b, 0x6f, 0x66, 0xde, 0x7b, 0xec,
-	0xc2, 0x8c, 0x89, 0x79, 0x67, 0xab, 0xcc, 0xd5, 0xb6, 0xb1, 0x38, 0x74, 0x85, 0xbe, 0x83, 0xf4,
-	0x35, 0x88, 0xdb, 0xea, 0xd3, 0xe2, 0x2d, 0x4c, 0x5a, 0x5a, 0xaa, 0xc1, 0x72, 0xb0, 0x1a, 0x99,
-	0xbd, 0xa0, 0xd7, 0x30, 0x8f, 0xe4, 0x8d, 0xa9, 0x96, 0x83, 0x2b, 0x18, 0x0b, 0x0e, 0xdb, 0x13,
-	0x13, 0x99, 0xfe, 0x81, 0xc5, 0xa6, 0xa6, 0xf7, 0x86, 0xe2, 0x81, 0xa1, 0xaf, 0x6f, 0xe2, 0x06,
-	0xcf, 0x21, 0x31, 0xbb, 0xd6, 0xda, 0x43, 0x5c, 0xc0, 0xe9, 0xa3, 0x73, 0xdb, 0x52, 0xa5, 0x62,
-	0x10, 0x08, 0x3e, 0xc0, 0xf4, 0x20, 0x8a, 0xd5, 0x74, 0x99, 0xac, 0xd2, 0xfc, 0x22, 0x73, 0x45,
-	0xd6, 0xa9, 0x60, 0x8e, 0x16, 0xf5, 0x2f, 0x5c, 0x76, 0x82, 0xd9, 0xd9, 0x8a, 0xa9, 0x27, 0x19,
-	0x61, 0xb4, 0xb1, 0x25, 0xa9, 0xa1, 0x04, 0x0b, 0xf6, 0xda, 0x13, 0xf1, 0x87, 0x4a, 0x82, 0xe6,
-	0x31, 0xae, 0xe1, 0x2c, 0x9a, 0x49, 0xc7, 0x34, 0x9f, 0x1f, 0xd4, 0x90, 0x0a, 0xed, 0x3c, 0x7f,
-	0xf9, 0x5f, 0xc5, 0x67, 0x98, 0x1d, 0x15, 0x41, 0xe5, 0xaf, 0xfa, 0x1e, 0xe5, 0xe6, 0xba, 0x67,
-	0x12, 0x5a, 0xeb, 0x93, 0x62, 0x2c, 0x9f, 0x75, 0xff, 0x17, 0x00, 0x00, 0xff, 0xff, 0x6a, 0x2e,
-	0x62, 0x66, 0xbd, 0x01, 0x00, 0x00,
+var fileDescriptor6 = []byte{
+	// 300 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x92, 0x4f, 0x4f, 0xf2, 0x40,
+	0x10, 0xc6, 0xdf, 0xd2, 0xf2, 0x62, 0x07, 0x6a, 0xcc, 0x04, 0xcd, 0xd2, 0xa8, 0x21, 0x8d, 0x07,
+	0x4e, 0x1c, 0x34, 0xf1, 0xe4, 0x85, 0x40, 0x4c, 0xb8, 0xae, 0x31, 0xf1, 0x0a, 0xcc, 0x24, 0x36,
+	0x31, 0xec, 0xd2, 0x29, 0x9f, 0xd1, 0xaf, 0x65, 0x96, 0xad, 0x48, 0x49, 0xf1, 0xe4, 0x71, 0x9f,
+	0x99, 0xf9, 0x3d, 0xf3, 0x67, 0x21, 0x11, 0x16, 0xc9, 0xcd, 0x7a, 0x6c, 0x0b, 0x53, 0x1a, 0x6c,
+	0xd9, 0x65, 0x7a, 0x5e, 0xb0, 0x58, 0xb3, 0x16, 0xf6, 0x5a, 0xf6, 0x06, 0xfd, 0x69, 0xc1, 0x8b,
+	0x92, 0x5f, 0x7c, 0xaa, 0xe6, 0xcd, 0x96, 0xa5, 0xc4, 0x0b, 0x08, 0x75, 0x4e, 0x2a, 0x18, 0x06,
+	0xa3, 0x48, 0x87, 0x45, 0x4e, 0xd8, 0x87, 0xf6, 0xc4, 0xda, 0x39, 0xa9, 0xee, 0x30, 0x18, 0xc5,
+	0xba, 0xbd, 0x70, 0x0f, 0x54, 0xd0, 0x79, 0x15, 0x2e, 0xe6, 0x24, 0xaa, 0x37, 0x0c, 0x47, 0xb1,
+	0xee, 0x6c, 0xfd, 0x33, 0x33, 0x70, 0x79, 0x44, 0xf6, 0xc6, 0x0d, 0x68, 0x84, 0x68, 0x6a, 0x88,
+	0x55, 0x6b, 0x47, 0x8e, 0x56, 0x86, 0xd8, 0x69, 0x33, 0x96, 0x95, 0x0a, 0xbd, 0x46, 0x2c, 0x2b,
+	0xbc, 0x86, 0xb8, 0x82, 0x55, 0x6d, 0x44, 0x3a, 0x96, 0x6f, 0x21, 0xdb, 0xc0, 0x60, 0xc6, 0x1f,
+	0xbc, 0x37, 0x74, 0x7d, 0xc9, 0xe9, 0x79, 0x7e, 0x85, 0xe1, 0x1d, 0x24, 0x1e, 0x56, 0x9f, 0x2e,
+	0xa1, 0x43, 0x31, 0x7b, 0x87, 0xab, 0x09, 0xd1, 0x5f, 0xf8, 0xdd, 0x02, 0x4c, 0x88, 0xea, 0x66,
+	0xb0, 0xd8, 0x2b, 0xf7, 0x9f, 0x01, 0x74, 0xaa, 0x72, 0x7c, 0x86, 0xa4, 0xb6, 0x59, 0x54, 0x63,
+	0xbb, 0x1c, 0x37, 0x9d, 0x31, 0x1d, 0x34, 0x44, 0xfc, 0x19, 0xb2, 0x7f, 0xf8, 0x04, 0xdd, 0x9f,
+	0x19, 0x05, 0x6f, 0x5c, 0xee, 0xc9, 0x0d, 0xa6, 0x3d, 0x17, 0x3e, 0xa8, 0x7e, 0x84, 0xb3, 0xaa,
+	0x63, 0xc1, 0xd4, 0xc5, 0x9a, 0x37, 0x71, 0x5c, 0xb7, 0xfc, 0xbf, 0xfb, 0x78, 0x0f, 0x5f, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x18, 0xac, 0x53, 0x12, 0x9d, 0x02, 0x00, 0x00,
 }

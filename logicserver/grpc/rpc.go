@@ -10,9 +10,28 @@ import (
 
 //protoc --go_out=plugins=grpc:. *.proto
 
-type Rpc struct{}
+type HandleFunc func(ctx context.Context, message proto.Message) (*proto.Message, error)
 
-func (m *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcResponse, error) {
+type HandleFuncInfo struct {
+	handle       HandleFunc
+	responseType grpcPb.MessageType
+}
+
+type Rpc struct {
+	handleFuncMap map[grpcPb.MessageType]*HandleFuncInfo
+}
+
+func (r *Rpc) SetHandleFunc(messageType grpcPb.MessageType, responseType grpcPb.MessageType, handle HandleFunc) {
+	if r.handleFuncMap == nil {
+		r.handleFuncMap = make(map[grpcPb.MessageType]*HandleFuncInfo)
+	}
+	r.handleFuncMap[messageType] = &HandleFuncInfo{
+		handle:       handle,
+		responseType: responseType,
+	}
+}
+
+func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcResponse, error) {
 
 	rpcResponse := &grpcPb.RpcResponse{
 		Rid:    request.GetRid(),
@@ -24,6 +43,15 @@ func (m *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 	ctx = context.WithValue(ctx, "UserId", request.UserId)
 	ctx = context.WithValue(ctx, "Token", request.Token)
 	ctx = context.WithValue(ctx, "ConnId", request.ConnId)
+
+	handleFuncInfo := r.handleFuncMap[(grpcPb.MessageType)(request.MessageType)]
+	if handleFuncInfo == nil {
+		log.Println("不支持的类型")
+		return nil, nil
+	}
+	// {
+	// 	protoMessage  handleFuncInfo.handle(ctx, request)
+	// }
 
 	protoMessage := grpcPb.Factory((grpcPb.MessageType)(request.MessageType))
 	err := proto.Unmarshal(request.ProtoBuf, protoMessage)
