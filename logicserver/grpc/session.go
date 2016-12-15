@@ -2,10 +2,10 @@ package grpc
 
 import (
 	"golang.org/x/net/context"
-	//"google.golang.org/grpc"
 	imserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
+	"im/logicserver/util/key"
 	"log"
 )
 
@@ -20,8 +20,9 @@ func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessi
 func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
 
 	log.Println("CreateSession")
+	userId := ctx.Value(key.UserId).(string)
 
-	protoMessage, err := service.HandleCreateSession(request)
+	protoMessage, err := service.HandleCreateSession(request, userId)
 
 	if err != nil {
 		log.Println(err.Error())

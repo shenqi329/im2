@@ -7,9 +7,8 @@ import (
 )
 
 func Handle(context Context) error {
+	log.Println("handle")
 	protoMessage := grpcPb.Factory((grpcPb.MessageType)(context.Message().Type))
-	requestBean := &grpcPb.DeviceRegisteRequest{}
-	proto.Unmarshal(context.Message().Body, requestBean)
 
 	if protoMessage == nil {
 		log.Println("未识别的消息")

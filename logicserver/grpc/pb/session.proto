@@ -11,11 +11,14 @@ message SessionInfo{
 	uint64 SessionId = 1;
 }
 
+message SessionUserInfo{
+	string UserId = 1;	//用户id
+}
+
 message CreateSessionRequest{
 	uint64 	Rid = 1;		//流水号
-	string  UserId = 2;		//用户id
  	string 	AppId = 11;		//app唯一标识
-	int32 	Count = 12;		//创建的个数	
+	repeated SessionUserInfo SessionUsers = 12;//会话包含的用户信息
 }
 
 
@@ -23,5 +26,5 @@ message CreateSessionResponse{
 	uint64 	Rid = 1;	//流水号
 	string 	Code = 2;	//回应的响应码
 	string 	Desc = 3;	//回应码的描述
-	repeated SessionInfo SessionIds = 11;
+	SessionInfo Session = 11;
 }

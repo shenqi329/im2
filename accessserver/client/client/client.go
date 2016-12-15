@@ -127,7 +127,6 @@ func (c *Client) handleMessage(conn *net.TCPConn, message *coder.Message) {
 	c.recvCount++
 	log.Println("recvMsg count = ", c.recvCount, "context:", proto.CompactTextString(protoMessage))
 	if (grpcPb.MessageType)(message.Type) == grpcPb.MessageTypeDeviceLoginResponse {
-		log.Println("....")
 		c.loginState = 1
 		go c.afterLogin(c)
 	}
