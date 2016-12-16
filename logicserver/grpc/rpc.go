@@ -3,14 +3,14 @@ package grpc
 import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	imserverError "im/logicserver/error"
+	logicserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
 	"log"
 )
 
 //protoc --go_out=plugins=grpc:. *.proto
 
-type HandleFunc func(ctx context.Context, message proto.Message) (*proto.Message, error)
+type HandleFunc func(ctx context.Context, message proto.Message) (proto.Message, error)
 
 type HandleFuncInfo struct {
 	handle       HandleFunc
@@ -21,7 +21,7 @@ type Rpc struct {
 	handleFuncMap map[grpcPb.MessageType]*HandleFuncInfo
 }
 
-func (r *Rpc) SetHandleFunc(messageType grpcPb.MessageType, responseType grpcPb.MessageType, handle HandleFunc) {
+func (r *Rpc) AddHandleFunc(messageType grpcPb.MessageType, responseType grpcPb.MessageType, handle HandleFunc) {
 	if r.handleFuncMap == nil {
 		r.handleFuncMap = make(map[grpcPb.MessageType]*HandleFuncInfo)
 	}
@@ -35,8 +35,8 @@ func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 
 	rpcResponse := &grpcPb.RpcResponse{
 		Rid:    request.GetRid(),
-		Code:   imserverError.CommonInternalServerError,
-		Desc:   imserverError.ErrorCodeToText(imserverError.CommonInternalServerError),
+		Code:   logicserverError.CommonInternalServerError,
+		Desc:   logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
 		ConnId: request.ConnId,
 	}
 
@@ -49,9 +49,6 @@ func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 		log.Println("不支持的类型")
 		return nil, nil
 	}
-	// {
-	// 	protoMessage  handleFuncInfo.handle(ctx, request)
-	// }
 
 	protoMessage := grpcPb.Factory((grpcPb.MessageType)(request.MessageType))
 	err := proto.Unmarshal(request.ProtoBuf, protoMessage)
@@ -60,53 +57,74 @@ func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 		return rpcResponse, nil
 	}
 
-	if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
-
-		response, err := HandleLogin(ctx, protoMessage.(*grpcPb.DeviceLoginRequest))
-		if err != nil {
-			log.Println(err.Error())
-			return rpcResponse, nil
-		}
-		protoBuf, err := proto.Marshal(response)
-		if err != nil {
-			log.Println(err.Error())
-			return rpcResponse, nil
-		}
-		rpcResponse = &grpcPb.RpcResponse{
-			Rid:         request.GetRid(),
-			Code:        response.Code,
-			Desc:        response.Desc,
-			MessageType: grpcPb.MessageTypeDeviceLoginResponse,
-			ProtoBuf:    protoBuf,
-			ConnId:      request.ConnId,
-		}
-
-	} else if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
-
-	} else if request.MessageType == grpcPb.MessageTypeCreateMessageRequest {
-
-		response, err := CreateMessage(ctx, protoMessage.(*grpcPb.CreateMessageRequest))
-		if err != nil {
-			log.Println(err.Error())
-			return rpcResponse, nil
-		}
-		protoBuf, err := proto.Marshal(response)
-		if err != nil {
-			log.Println(err.Error())
-			return rpcResponse, nil
-		}
-		rpcResponse = &grpcPb.RpcResponse{
-			Rid:         request.GetRid(),
-			Code:        response.Code,
-			Desc:        response.Desc,
-			MessageType: grpcPb.MessageTypeCreateMessageResponse,
-			ProtoBuf:    protoBuf,
-			ConnId:      request.ConnId,
-		}
-
-	} else if request.MessageType == grpcPb.MessageTypeCreateSessionRequest {
-
+	response, err := handleFuncInfo.handle(ctx, protoMessage)
+	if err != nil {
+		log.Println(err.Error())
+		return rpcResponse, nil
 	}
+
+	protoBuf, err := proto.Marshal(response)
+	if err != nil {
+		log.Println(err.Error())
+		return rpcResponse, nil
+	}
+
+	rpcResponse = &grpcPb.RpcResponse{
+		Rid:         request.GetRid(),
+		Code:        logicserverError.CommonSuccess,
+		Desc:        logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
+		MessageType: (int32)(handleFuncInfo.responseType),
+		ProtoBuf:    protoBuf,
+		ConnId:      request.ConnId,
+	}
+
+	// if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
+
+	// 	response, err := HandleLogin(ctx, protoMessage.(*grpcPb.DeviceLoginRequest))
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return rpcResponse, nil
+	// 	}
+	// 	protoBuf, err := proto.Marshal(response)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return rpcResponse, nil
+	// 	}
+	// 	rpcResponse = &grpcPb.RpcResponse{
+	// 		Rid:         request.GetRid(),
+	// 		Code:        response.Code,
+	// 		Desc:        response.Desc,
+	// 		MessageType: grpcPb.MessageTypeDeviceLoginResponse,
+	// 		ProtoBuf:    protoBuf,
+	// 		ConnId:      request.ConnId,
+	// 	}
+
+	// } else if request.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
+
+	// } else if request.MessageType == grpcPb.MessageTypeCreateMessageRequest {
+
+	// 	response, err := CreateMessage(ctx, protoMessage.(*grpcPb.CreateMessageRequest))
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return rpcResponse, nil
+	// 	}
+	// 	protoBuf, err := proto.Marshal(response)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return rpcResponse, nil
+	// 	}
+	// 	rpcResponse = &grpcPb.RpcResponse{
+	// 		Rid:         request.GetRid(),
+	// 		Code:        response.Code,
+	// 		Desc:        response.Desc,
+	// 		MessageType: grpcPb.MessageTypeCreateMessageResponse,
+	// 		ProtoBuf:    protoBuf,
+	// 		ConnId:      request.ConnId,
+	// 	}
+
+	// } else if request.MessageType == grpcPb.MessageTypeCreateSessionRequest {
+
+	// }
 
 	return rpcResponse, nil
 }
