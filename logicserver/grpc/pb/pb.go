@@ -11,12 +11,17 @@ const (
 	MessageTypeDeviceRegisteResponse = 2
 	MessageTypeDeviceLoginRequest    = 3
 	MessageTypeDeviceLoginResponse   = 4
-	MessageTypeCreateMessageRequest  = 5
-	MessageTypeCreateMessageResponse = 6
-	MessageTypeCreateSessionRequest  = 7
-	MessageTypeCreateSessionResponse = 8
-	MessageTypeRPCRequest            = 9
-	MessageTypeRPCResponse           = 10
+	MessageTypeRPCRequest            = 5
+	MessageTypeRPCResponse           = 6
+	MessageTypeCreateMessageRequest  = 7
+	MessageTypeCreateMessageResponse = 8
+
+	MessageTypeCreateSessionRequest       = 10001
+	MessageTypeCreateSessionResponse      = 10002
+	MessageTypeAddSessionUsersRequest     = 10003
+	MessageTypeAddSessionUsersResponse    = 10004
+	MessageTypeDeleteSessionUsersRequest  = 10005
+	MessageTypeDeleteSessionUsersResponse = 10006
 )
 
 var kinds = map[MessageType]func() proto.Message{

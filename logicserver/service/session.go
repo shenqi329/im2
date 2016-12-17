@@ -7,19 +7,20 @@ import (
 	logicserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
 	"log"
+	"strings"
 )
 
 func CreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb.CreateSessionResponse, error) {
-
 	log.Println(request.String())
 
 	session := &logicserverBean.Session{
-		AppId:        request.AppId,
+		AppId:        request.RpcInfo.AppId,
 		CreateUserId: userId,
 	}
 
-	count, err := dao.NewDao().Insert(session)
+	_, err := dao.NewDao().Insert(session)
 	if err != nil {
+		log.Println(err.Error())
 		err = logicserverError.ErrorInternalServerError
 		return nil, err
 	}
@@ -28,22 +29,24 @@ func CreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb
 		SessionId: session.Id,
 		UserId:    userId,
 	}
-	count, err = dao.NewDao().Insert(sessionMap)
-	if err != nil || count != 1 {
-		err = logicserverError.ErrorInternalServerError
-		return nil, err
-	}
+	sessionMaps := []interface{}{sessionMap}
 
 	for i := 0; i < len(request.UserIds); i++ {
-		sessionMap := &logicserverBean.SessionMap{
+		if strings.EqualFold(request.UserIds[i], userId) {
+			continue
+		}
+		sessionMap = &logicserverBean.SessionMap{
 			SessionId: session.Id,
 			UserId:    request.UserIds[i],
 		}
-		count, err = dao.NewDao().Insert(sessionMap)
-		if err != nil || count != 1 {
-			err = logicserverError.ErrorInternalServerError
-			return nil, err
-		}
+		sessionMaps = append(sessionMaps, sessionMap)
+	}
+	_, err = dao.NewDao().Insert(sessionMaps...)
+
+	if err != nil {
+		log.Println(err.Error())
+		err = logicserverError.ErrorInternalServerError
+		return nil, err
 	}
 
 	response := &grpcPb.CreateSessionResponse{

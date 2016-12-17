@@ -1,49 +1,71 @@
 package grpc
 
 import (
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/service"
-	"im/logicserver/util/key"
+	//"im/logicserver/util/key"
+	logicserverError "im/logicserver/error"
 	"log"
 )
 
 type Session struct{}
 
 func (s *Session) CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
-	return CreateSession(ctx, request)
+
+	message, err := CreateSession(ctx, request)
+	response := message.(*grpcPb.CreateSessionResponse)
+	return response, err
 }
 
 func (s *Session) DeleteUsers(ctx context.Context, request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Response, error) {
-	return DeleteSessionUsers(ctx, request)
+
+	message, err := DeleteSessionUsers(ctx, request)
+	response := message.(*grpcPb.Response)
+
+	return response, err
 }
 
 func (s *Session) AddUsers(ctx context.Context, request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
-	return nil, nil
+
+	message, err := AddSessionUsers(ctx, request)
+	response := message.(*grpcPb.Response)
+
+	return response, err
 }
 
-func CreateSession(ctx context.Context, request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
+func CreateSession(ctx context.Context, message proto.Message) (proto.Message, error) {
 
 	log.Println("CreateSession")
-	userId := ctx.Value(key.UserId).(string)
+	request := message.(*grpcPb.CreateSessionRequest)
+	userId := request.RpcInfo.UserId
 
-	protoMessage, err := service.CreateSession(request, userId)
-
-	return protoMessage, err
+	protoResponse := &grpcPb.CreateSessionResponse{
+		Rid:  request.Rid,
+		Code: logicserverError.CommonInternalServerError,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
+	}
+	response, err := service.CreateSession(request, userId)
+	if err != nil {
+		log.Println(err.Error())
+		return protoResponse, err
+	}
+	return response, nil
 }
 
-func DeleteSessionUsers(ctx context.Context, request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Response, error) {
+func DeleteSessionUsers(ctx context.Context, message proto.Message) (proto.Message, error) {
 
 	log.Println("DeleteSessionUsers")
-	protoMessage, err := service.DeleteSessionUsers(request)
 
-	return protoMessage, err
+	request := message.(*grpcPb.DeleteSessionUsersRequest)
+	return service.DeleteSessionUsers(request)
 }
 
-func AddSessionUsers(ctx context.Context, request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
+func AddSessionUsers(ctx context.Context, message proto.Message) (proto.Message, error) {
 
 	log.Println("AddSessionUsers")
-	protoMessage, err := service.AddSessionUsers(request)
+	request := message.(*grpcPb.AddSessionUsersRequest)
 
-	return protoMessage, err
+	return service.AddSessionUsers(request)
 }

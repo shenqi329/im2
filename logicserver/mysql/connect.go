@@ -22,7 +22,6 @@ func GetXormEngine() *xorm.Engine {
 				return nil
 			}
 			engine = eng
-			//engine.ShowSQL(true)
 		} else {
 			eng, err := xorm.NewEngine("mysql", "im_connect:im_connect@tcp(localhost:3306)/db_im?charset=utf8")
 			if err != nil {
@@ -30,11 +29,11 @@ func GetXormEngine() *xorm.Engine {
 				return nil
 			}
 			engine = eng
-			//engine.ShowSQL(true)
 		}
 		engine.SetMaxIdleConns(200)
 		engine.SetMaxOpenConns(1000)
-		//engine.ShowExecTime(true)
+		engine.ShowSQL(true)
+		engine.ShowExecTime(true)
 	}
 	return engine
 }

@@ -23,6 +23,7 @@ It has these top-level messages:
 	DeviceRegisteResponse
 	Request
 	Response
+	RpcInfo
 	RpcRequest
 	RpcResponse
 	CreateSessionRequest

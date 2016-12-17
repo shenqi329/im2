@@ -29,6 +29,7 @@ type ConnectInfo struct {
 	isLogin bool
 	token   string
 	userId  string
+	appId   string
 }
 
 type Server struct {
@@ -174,7 +175,23 @@ func (s *Server) transToLogicServer(rpcRequest *grpcPb.RpcRequest, protocolRespC
 		return
 	}
 
-	s.sendProtocolToChan((int)(response.MessageType), rpcRequest.ConnId, response.ProtoBuf, protocolRespChan)
+	var isLogin bool = false
+	var isLogout bool = false
+	if rpcRequest.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
+		isLogin = true
+	}
+	// if rpcRequest.MessageType == grpcPb.MessageTypeDeviceLoginRequest {
+
+	// }
+
+	protocolBuf, _ := coder.EncoderMessage((int)(response.MessageType), response.ProtoBuf)
+
+	protocolRespChan <- &ProtocolResp{
+		protocolBuf: protocolBuf,
+		connId:      rpcRequest.RpcInfo.ConnId,
+		isLogin:     isLogin,
+		isLogout:    isLogout,
+	}
 }
 
 func (s *Server) sendErrorProtocolToChan(code string, desc string, rpcRequest *grpcPb.RpcRequest, protocolRespChan chan<- *ProtocolResp) {
@@ -183,23 +200,18 @@ func (s *Server) sendErrorProtocolToChan(code string, desc string, rpcRequest *g
 		Code: code,
 		Desc: desc,
 	}
-	protocolBuf, _ := proto.Marshal(response)
-	s.sendProtocolToChan((int)(rpcRequest.MessageType+1), rpcRequest.ConnId, protocolBuf, protocolRespChan)
-}
-
-func (s *Server) sendProtocolToChan(messageType int, connId uint64, protocolBuf []byte, protocolRespChan chan<- *ProtocolResp) {
-
-	protocolBuf, _ = coder.EncoderMessage(messageType, protocolBuf)
+	protoBuf, _ := proto.Marshal(response)
+	protocolBuf, _ := coder.EncoderMessage((int)(rpcRequest.MessageType+1), protoBuf)
 
 	protocolRespChan <- &ProtocolResp{
 		protocolBuf: protocolBuf,
-		connId:      connId,
+		connId:      rpcRequest.RpcInfo.ConnId,
 	}
 }
 
 func (s *Server) transToBusinessServer(rpcRequest *grpcPb.RpcRequest, rpcRespChan chan<- *grpcPb.RpcResponse) {
 	//easynote业务id
-	if rpcRequest.AppId == "89897" {
+	if rpcRequest.RpcInfo.AppId == "89897" {
 		//log.Println("转发给业务服务器")
 		rpcClient := grpcPb.NewRpcClient(s.grpcEasynoteClientConn)
 		response, err := rpcClient.Rpc(netContext.Background(), rpcRequest)
@@ -216,6 +228,8 @@ func (s *Server) transToBusinessServer(rpcRequest *grpcPb.RpcRequest, rpcRespCha
 type ProtocolResp struct {
 	protocolBuf []byte
 	connId      uint64
+	isLogin     bool
+	isLogout    bool
 }
 
 //连接到逻辑服务器
@@ -250,6 +264,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 							log.Println(loginRequest.String())
 							connInfo.token = loginRequest.Token
 							connInfo.userId = loginRequest.UserId
+							connInfo.appId = loginRequest.AppId
 						}
 					}
 					connMap[req.connId] = connInfo
@@ -263,21 +278,28 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 						break
 					}
 					rpcRequest, ok := req.protoMessage.(*grpcPb.RpcRequest)
+					log.Println(rpcRequest.String())
 					if !ok {
 						break
 					}
-					rpcRequest.ConnId = (uint64)(req.connId)
-					rpcRequest.UserId = connInfo.userId
-					rpcRequest.Token = connInfo.token
+					rpcRequest.RpcInfo = &grpcPb.RpcInfo{
+						AppId:  connInfo.appId,
+						ConnId: (uint64)(req.connId),
+						UserId: connInfo.userId,
+						Token:  connInfo.token,
+					}
 					go s.transToBusinessServer(rpcRequest, rpcRespChan)
 				} else {
 					//转发给im逻辑服务器
 					protoBuf, err := proto.Marshal(req.protoMessage)
 					if err == nil {
 						rpcRequest := &grpcPb.RpcRequest{}
-						rpcRequest.ConnId = (uint64)(req.connId)
-						rpcRequest.UserId = connInfo.userId
-						rpcRequest.Token = connInfo.token
+						rpcRequest.RpcInfo = &grpcPb.RpcInfo{
+							AppId:  connInfo.appId,
+							ConnId: (uint64)(req.connId),
+							UserId: connInfo.userId,
+							Token:  connInfo.token,
+						}
 						rpcRequest.MessageType = (int32)(req.messageType)
 						rpcRequest.ProtoBuf = protoBuf
 						go s.transToLogicServer(rpcRequest, protocolRespChan)
@@ -300,6 +322,11 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 			{
 				connInfo := connMap[protocolBufChan.connId]
 				connInfo.conn.Write(protocolBufChan.protocolBuf)
+				if protocolBufChan.isLogin {
+					connInfo.isLogin = true
+				} else if protocolBufChan.isLogout {
+					connInfo.isLogin = false
+				}
 			}
 		}
 	}

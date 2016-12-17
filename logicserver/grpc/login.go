@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	imserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
@@ -13,12 +14,17 @@ type Login struct{}
 
 func (m *Login) Login(ctx context.Context, request *grpcPb.DeviceLoginRequest) (*grpcPb.DeviceLoginResponse, error) {
 
-	return HandleLogin(ctx, request)
+	message, err := HandleLogin(ctx, request)
 
+	response := message.(*grpcPb.DeviceLoginResponse)
+
+	return response, err
 }
 
-func HandleLogin(ctx context.Context, request *grpcPb.DeviceLoginRequest) (*grpcPb.DeviceLoginResponse, error) {
+func HandleLogin(ctx context.Context, message proto.Message) (proto.Message, error) {
 	log.Println("Login")
+
+	request := message.(*grpcPb.DeviceLoginRequest)
 
 	protoMessage, err := service.HandleLogin(request)
 
