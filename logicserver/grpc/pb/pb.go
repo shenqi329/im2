@@ -25,16 +25,21 @@ const (
 )
 
 var kinds = map[MessageType]func() proto.Message{
-	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceLoginRequest{} },
-	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceLoginResponse{} },
+	MessageTypeDeviceRegisteRequest:  func() proto.Message { return &DeviceRegisteRequest{} },
+	MessageTypeDeviceRegisteResponse: func() proto.Message { return &DeviceRegisteResponse{} },
 	MessageTypeDeviceLoginRequest:    func() proto.Message { return &DeviceLoginRequest{} },
 	MessageTypeDeviceLoginResponse:   func() proto.Message { return &DeviceLoginResponse{} },
-	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
-	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
-	MessageTypeCreateSessionRequest:  func() proto.Message { return &CreateSessionRequest{} },
-	MessageTypeCreateSessionResponse: func() proto.Message { return &CreateSessionResponse{} },
 	MessageTypeRPCRequest:            func() proto.Message { return &RpcRequest{} },
 	MessageTypeRPCResponse:           func() proto.Message { return &RpcResponse{} },
+	MessageTypeCreateMessageRequest:  func() proto.Message { return &CreateMessageRequest{} },
+	MessageTypeCreateMessageResponse: func() proto.Message { return &CreateMessageResponse{} },
+
+	MessageTypeCreateSessionRequest:       func() proto.Message { return &CreateSessionRequest{} },
+	MessageTypeCreateSessionResponse:      func() proto.Message { return &CreateSessionResponse{} },
+	MessageTypeAddSessionUsersRequest:     func() proto.Message { return &AddSessionUsersRequest{} },
+	MessageTypeAddSessionUsersResponse:    func() proto.Message { return &Response{} },
+	MessageTypeDeleteSessionUsersRequest:  func() proto.Message { return &DeleteSessionUsersRequest{} },
+	MessageTypeDeleteSessionUsersResponse: func() proto.Message { return &Response{} },
 }
 
 func Factory(messageType MessageType) proto.Message {

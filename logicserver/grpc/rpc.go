@@ -64,6 +64,10 @@ func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 		log.Println(err.Error())
 		return rpcResponse, nil
 	}
+	if response == nil {
+		log.Println("没有返回数据")
+		return rpcResponse, nil
+	}
 
 	protoBuf, err := proto.Marshal(response)
 	if err != nil {
@@ -75,7 +79,7 @@ func (r *Rpc) Rpc(ctx context.Context, request *grpcPb.RpcRequest) (*grpcPb.RpcR
 		Rid:         request.GetRid(),
 		Code:        logicserverError.CommonSuccess,
 		Desc:        logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
-		MessageType: (int32)(handleFuncInfo.responseType),
+		MessageType: (uint32)(handleFuncInfo.responseType),
 		ProtoBuf:    protoBuf,
 		ConnId:      request.RpcInfo.ConnId,
 	}

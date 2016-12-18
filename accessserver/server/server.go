@@ -220,7 +220,9 @@ func (s *Server) transToBusinessServer(rpcRequest *grpcPb.RpcRequest, rpcRespCha
 			log.Println(err.Error())
 			return
 		}
-		log.Println(response.String())
+		if response != nil {
+			log.Println(response.String())
+		}
 		rpcRespChan <- response
 	}
 }
@@ -300,7 +302,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 							UserId: connInfo.userId,
 							Token:  connInfo.token,
 						}
-						rpcRequest.MessageType = (int32)(req.messageType)
+						rpcRequest.MessageType = (uint32)(req.messageType)
 						rpcRequest.ProtoBuf = protoBuf
 						go s.transToLogicServer(rpcRequest, protocolRespChan)
 					}

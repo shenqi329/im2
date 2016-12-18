@@ -20,8 +20,11 @@ func (r *Registe) Registe(ctx context.Context, request *grpcPb.DeviceRegisteRequ
 
 func HandleRegiste(ctx context.Context, message proto.Message) (proto.Message, error) {
 
-	log.Println("Login")
-	request := message.(*grpcPb.DeviceRegisteRequest)
+	log.Println("Registe")
+	request, ok := message.(*grpcPb.DeviceRegisteRequest)
+	if !ok {
+		return nil, nil
+	}
 	protoMessage, err := service.HandleRegiste(request)
 
 	return protoMessage, err

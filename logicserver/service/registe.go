@@ -80,7 +80,7 @@ func HandleRegiste(deviceRegisteRequest *grpcPb.DeviceRegisteRequest) (protoMess
 		Rid:   deviceRegisteRequest.Rid,
 		Code:  logicserverError.CommonSuccess,
 		Desc:  logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
-		Token: strconv.FormatInt(tokenBean.Id, 10),
+		Token: strconv.FormatUint(tokenBean.Id, 10),
 	}
 
 	return

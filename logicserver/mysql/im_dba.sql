@@ -40,7 +40,7 @@ create table `t_message`(
     `t_message_content` varchar(20000) NOT NULL COMMENT '消息内容',
     `t_message_index` bigint(20) NOT NULL,
     `t_message_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
-    PRIMARY KEY (`t_message_id`),
+    -- PRIMARY KEY (`t_message_id`),
     UNIQUE KEY `t_message_user_message_index` (`t_message_user_id`,`t_message_index`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='消息表';
 

@@ -6,7 +6,7 @@ import (
 
 type (
 	Token struct {
-		Id         int64      `xorm:"'t_token_id'" json:"id,omitempty"`
+		Id         uint64     `xorm:"'t_token_id'" json:"id,omitempty"`
 		AppId      string     `xorm:"'t_token_app_id'" json:"appId,omitempty"`
 		UserId     string     `xorm:"'t_token_user_id'" json:"userId,omitempty"`
 		DeviceId   string     `xorm:"'t_token_device_id'" json:"deviceId,omitempty"`

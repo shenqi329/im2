@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-func CreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb.CreateSessionResponse, error) {
+func CreateSession(request *grpcPb.CreateSessionRequest) (*grpcPb.CreateSessionResponse, error) {
 	log.Println(request.String())
 
 	session := &logicserverBean.Session{
 		AppId:        request.RpcInfo.AppId,
-		CreateUserId: userId,
+		CreateUserId: request.RpcInfo.UserId,
 	}
 
 	_, err := dao.NewDao().Insert(session)
@@ -27,12 +27,12 @@ func CreateSession(request *grpcPb.CreateSessionRequest, userId string) (*grpcPb
 
 	sessionMap := &logicserverBean.SessionMap{
 		SessionId: session.Id,
-		UserId:    userId,
+		UserId:    request.RpcInfo.UserId,
 	}
 	sessionMaps := []interface{}{sessionMap}
 
 	for i := 0; i < len(request.UserIds); i++ {
-		if strings.EqualFold(request.UserIds[i], userId) {
+		if strings.EqualFold(request.UserIds[i], request.RpcInfo.UserId) {
 			continue
 		}
 		sessionMap = &logicserverBean.SessionMap{
@@ -63,10 +63,48 @@ func DeleteSessionUsers(request *grpcPb.DeleteSessionUsersRequest) (*grpcPb.Resp
 
 	log.Println(request.String())
 
-	return nil, nil
+	for i := 0; i < len(request.DeleteUserIds); i++ {
+		sessionMap := &logicserverBean.SessionMap{
+			SessionId: request.SessionId,
+			UserId:    request.DeleteUserIds[i],
+		}
+		_, _ = dao.NewDao().Delete(sessionMap)
+	}
+
+	response := &grpcPb.Response{
+		Rid:  (uint64)(request.Rid),
+		Code: logicserverError.CommonSuccess,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
+	}
+	return response, nil
 }
 
 func AddSessionUsers(request *grpcPb.AddSessionUsersRequest) (*grpcPb.Response, error) {
 
-	return nil, nil
+	log.Println(request.String())
+
+	sessionMaps := []interface{}{}
+
+	for i := 0; i < len(request.AddUserIds); i++ {
+		sessionMap := &logicserverBean.SessionMap{
+			SessionId: request.SessionId,
+			UserId:    request.AddUserIds[i],
+		}
+		sessionMaps = append(sessionMaps, sessionMap)
+	}
+
+	_, err := dao.NewDao().Insert(sessionMaps...)
+
+	if err != nil {
+		log.Println(err.Error())
+		err = logicserverError.ErrorInternalServerError
+		return nil, err
+	}
+
+	response := &grpcPb.Response{
+		Rid:  (uint64)(request.Rid),
+		Code: logicserverError.CommonSuccess,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
+	}
+	return response, nil
 }

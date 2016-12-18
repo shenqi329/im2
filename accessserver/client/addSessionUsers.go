@@ -24,18 +24,19 @@ func main() {
 
 		log.Println("登陆成功")
 		for i := 0; i < 1; i++ {
-			createSessionRequest := &grpcPb.CreateSessionRequest{
-				Rid:     c.GetRid(),
-				UserIds: []string{"1", "2"},
+			addSessionUserRequest := &grpcPb.AddSessionUsersRequest{
+				Rid:        c.GetRid(),
+				SessionId:  32,
+				AddUserIds: []string{"1", "2"},
 			}
-			protoBuf, err := proto.Marshal(createSessionRequest)
+			protoBuf, err := proto.Marshal(addSessionUserRequest)
 			if err != nil {
 				log.Print(err.Error())
 			}
 
 			rpcRequest := &grpcPb.RpcRequest{
 				Rid:         c.GetRid(),
-				MessageType: grpcPb.MessageTypeCreateSessionRequest,
+				MessageType: grpcPb.MessageTypeAddSessionUsersRequest,
 				ProtoBuf:    protoBuf,
 			}
 
