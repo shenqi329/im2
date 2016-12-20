@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	client "im/accessserver/client/client"
 	grpcPb "im/logicserver/grpc/pb"
 	"im/logicserver/uuid"
@@ -22,13 +23,13 @@ func main() {
 	c.SetAfterLogin(func(c *client.Client) {
 
 		log.Println("登陆成功")
-		for i := 0; i < 1; i++ {
+		for i := 0; i < 10000; i++ {
 			request := &grpcPb.CreateMessageRequest{
 				Rid:       c.GetRid(),
 				SessionId: 32,
 				Type:      1,
 				Id:        uuid.Rand().Hex(),
-				Content:   "a message from push",
+				Content:   fmt.Sprint("a message from push ", i+1),
 			}
 
 			buffer, err := coder.EncoderProtoMessage(grpcPb.MessageTypeCreateMessageRequest, request)
@@ -36,7 +37,7 @@ func main() {
 				log.Println(err.Error())
 			}
 			c.GetConn().Write(buffer)
-			time.Sleep(1 * time.Millisecond)
+			time.Sleep(25 * time.Millisecond)
 		}
 	})
 
