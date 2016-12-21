@@ -44,6 +44,10 @@ create table `t_message`(
     UNIQUE KEY `t_message_user_message_index` (`t_message_user_id`,`t_message_index`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='消息表';
 
+start transaction;	
+select max(t_message_index) from t_message where t_message_user_id = "1";
+commit;
+
 
 -- [CONSTRAINT symbol] FOREIGN KEY [id] (index_col_name, …)
 -- REFERENCES tbl_name (index_col_name, …)

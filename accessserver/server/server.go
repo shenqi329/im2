@@ -5,12 +5,15 @@ import (
 	netContext "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	accessError "im/accessserver/server/error"
+	accessError "im/accessserver/error"
+	accessserverGrpc "im/accessserver/grpc"
+	accessserverGrpcPb "im/accessserver/grpc/pb"
 	grpcPb "im/logicserver/grpc/pb"
 	coder "im/protocol/coder"
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,6 +25,13 @@ type Request struct {
 	messageType  grpcPb.MessageType
 	connId       uint64
 	conn         *net.TCPConn
+}
+
+type ProtocolResp struct {
+	protocolBuf []byte
+	connId      uint64
+	isLogin     bool
+	isLogout    bool
 }
 
 type ConnectInfo struct {
@@ -46,6 +56,10 @@ type Server struct {
 	grpcLogicClientConn    *grpc.ClientConn
 	grpcServer             *grpc.Server
 
+	rpcRespChan      chan *grpcPb.RpcResponse
+	protocolRespChan chan *ProtocolResp
+	rpcReqChan       chan *accessserverGrpcPb.RpcRequest
+
 	handle func(context Context) error
 }
 
@@ -66,8 +80,11 @@ func (s *Server) createConnId() uint64 {
 func NEWServer(localTcpAddr string, proxyUdpAddr string) (s *Server) {
 
 	return &Server{
-		localTcpAddr: localTcpAddr,
-		proxyUdpAddr: proxyUdpAddr,
+		localTcpAddr:     localTcpAddr,
+		proxyUdpAddr:     proxyUdpAddr,
+		rpcRespChan:      make(chan *grpcPb.RpcResponse, 1000),
+		protocolRespChan: make(chan *ProtocolResp, 1000),
+		rpcReqChan:       make(chan *accessserverGrpcPb.RpcRequest, 1000),
 	}
 }
 
@@ -107,6 +124,10 @@ func (s *Server) grpcServerServe(addr string) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	rpc := &accessserverGrpc.Rpc{}
+
+	accessserverGrpcPb.RegisterRpcServer(s.GrpcServer(), rpc)
+
 	reflection.Register(s.GrpcServer())
 	if err := s.GrpcServer().Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
@@ -116,9 +137,25 @@ func (s *Server) grpcServerServe(addr string) {
 func (s *Server) newGrpcServer() *grpc.Server {
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		//log.Println("设置环境变量")
-		//ctx = netContext.WithValue(ctx, "xxxxx", v)
-		return handler(ctx, req)
+		ctx = netContext.WithValue(ctx, "", s.rpcRespChan)
+		response, err := handler(ctx, req)
+		v := reflect.ValueOf(response)
+		if !v.IsValid() || v.IsNil() {
+			request, ok := req.(accessserverGrpc.Request)
+			if ok {
+				response = &grpcPb.Response{
+					Rid:  request.GetRid(),
+					Code: accessError.CommonInternalServerError,
+					Desc: accessError.ErrorCodeToText(accessError.CommonInternalServerError),
+				}
+			} else {
+				response = &grpcPb.Response{
+					Code: accessError.CommonInternalServerError,
+					Desc: accessError.ErrorCodeToText(accessError.CommonInternalServerError),
+				}
+			}
+		}
+		return response, nil
 	}))
 	return grpcServer
 }
@@ -227,18 +264,11 @@ func (s *Server) transToBusinessServer(rpcRequest *grpcPb.RpcRequest, rpcRespCha
 	}
 }
 
-type ProtocolResp struct {
-	protocolBuf []byte
-	connId      uint64
-	isLogin     bool
-	isLogout    bool
-}
-
 //连接到逻辑服务器
 func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint64) {
 
-	rpcRespChan := make(chan *grpcPb.RpcResponse, 1000)
-	protocolRespChan := make(chan *ProtocolResp, 1000)
+	//rpcRespChan := make(chan *grpcPb.RpcResponse, 1000)
+	//protocolRespChan := make(chan *ProtocolResp, 1000)
 	connMap := make(map[uint64]*ConnectInfo)
 
 	for {
@@ -290,7 +320,7 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 						UserId: connInfo.userId,
 						Token:  connInfo.token,
 					}
-					go s.transToBusinessServer(rpcRequest, rpcRespChan)
+					go s.transToBusinessServer(rpcRequest, s.rpcRespChan)
 				} else {
 					//转发给im逻辑服务器
 					protoBuf, err := proto.Marshal(req.protoMessage)
@@ -304,11 +334,11 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 						}
 						rpcRequest.MessageType = (uint32)(req.messageType)
 						rpcRequest.ProtoBuf = protoBuf
-						go s.transToLogicServer(rpcRequest, protocolRespChan)
+						go s.transToLogicServer(rpcRequest, s.protocolRespChan)
 					}
 				}
 			}
-		case rpcResp := <-rpcRespChan:
+		case rpcResp := <-s.rpcRespChan:
 			{
 				connInfo := connMap[rpcResp.ConnId]
 				if connInfo == nil {
@@ -316,11 +346,11 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 				}
 				buffer, err := coder.EncoderProtoMessage(grpcPb.MessageTypeRPCResponse, rpcResp)
 				if err != nil {
-					log.Println(err.Error())
+					log.Println(err)
 				}
-				connInfo.conn.Write(buffer)
+				go connInfo.conn.Write(buffer)
 			}
-		case protocolBufChan := <-protocolRespChan:
+		case protocolBufChan := <-s.protocolRespChan:
 			{
 				connInfo := connMap[protocolBufChan.connId]
 				connInfo.conn.Write(protocolBufChan.protocolBuf)
@@ -329,6 +359,18 @@ func (s *Server) connectIMServer(reqChan <-chan *Request, closeChan <-chan uint6
 				} else if protocolBufChan.isLogout {
 					connInfo.isLogin = false
 				}
+			}
+		case rpcReq := <-s.rpcReqChan:
+			{
+				connInfo := connMap[rpcReq.ConnId]
+				if connInfo == nil {
+					break
+				}
+				buffer, err := coder.EncoderProtoMessage(rpcReq.MessageType, rpcReq.ProtoBuf)
+				if err != nil {
+					log.Println(err)
+				}
+				go connInfo.conn.Write(buffer)
 			}
 		}
 	}

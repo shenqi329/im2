@@ -37,7 +37,7 @@ func main() {
 				log.Println(err.Error())
 			}
 			c.GetConn().Write(buffer)
-			time.Sleep(25 * time.Millisecond)
+			//time.Sleep(25 * time.Millisecond)
 		}
 	})
 

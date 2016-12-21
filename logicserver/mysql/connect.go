@@ -32,8 +32,8 @@ func GetXormEngine() *xorm.Engine {
 		}
 		engine.SetMaxIdleConns(200)
 		engine.SetMaxOpenConns(1000)
-		engine.ShowSQL(true)
-		engine.ShowExecTime(true)
+		//engine.ShowSQL(true)
+		//engine.ShowExecTime(true)
 	}
 	return engine
 }

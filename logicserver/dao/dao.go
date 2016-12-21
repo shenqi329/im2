@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/go-xorm/xorm"
 	"im/logicserver/mysql"
+	"strings"
 )
 
 type Dao struct {
@@ -12,6 +13,23 @@ type Dao struct {
 
 func NewDao() *Dao {
 	return &Dao{}
+}
+
+func ErrorIsTooManyConnections(err error) bool {
+	if err == nil {
+		return false
+	}
+	errString := err.Error()
+
+	return strings.Contains(errString, "Error") && strings.Contains(errString, "1040")
+}
+
+func ErrorIsDuplicate(err error) bool {
+	if err == nil {
+		return false
+	}
+	errString := err.Error()
+	return strings.Contains(errString, "Error") && strings.Contains(errString, "1062")
 }
 
 // Find retrieve records from table, condiBeans's non-empty fields

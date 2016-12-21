@@ -11,6 +11,26 @@ import (
 	"time"
 )
 
+func messageInsert(message *logicserverBean.Message) error {
+	var err error
+	for i := 1; i <= 5; i++ {
+		_, err := dao.MessageInsert(message)
+		if err == nil {
+			return nil
+		}
+		if dao.ErrorIsDuplicate(err) {
+			time.Sleep(i * 200 * time.Millisecond)
+			continue
+		}
+		if dao.ErrorIsTooManyConnections(err) {
+			time.Sleep(i * 200 * time.Millisecond)
+			continue
+		}
+		break
+	}
+	return err
+}
+
 func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*grpcPb.CreateMessageResponse, error) {
 
 	timeNow := time.Now()
@@ -23,12 +43,25 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*
 		CreateTime: &timeNow,
 	}
 
-	_, err := dao.MessageInsert(message)
+	err := messageInsert(message)
 	if err != nil {
 		log.Println(err)
 		return nil, logicserverError.ErrorInternalServerError
 	}
 
+	go insertMessageToUserInSession(request, userId, &timeNow)
+
+	response := &grpcPb.CreateMessageResponse{
+		Rid:  (uint64)(request.Rid),
+		Code: logicserverError.CommonSuccess,
+		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
+	}
+
+	return response, nil
+}
+
+//因为消息发送发已经发送成功了,这里一定要确保插入成功
+func insertMessageToUserInSession(request *grpcPb.CreateMessageRequest, userId string, timeNow *time.Time) {
 	if request.SessionId > 0 {
 		var sessionMaps []*logicserverBean.SessionMap
 		dao.NewDao().Find(&sessionMaps, &logicserverBean.SessionMap{
@@ -46,21 +79,11 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*
 				UserId:     sessionMap.UserId,
 				Type:       (int)(request.Type),
 				Content:    request.Content,
-				CreateTime: &timeNow,
+				CreateTime: timeNow,
 			}
-			dao.MessageInsert(message)
+			messageInsert(message)
 		}
 	}
-
-	response := &grpcPb.CreateMessageResponse{
-		Rid:  (uint64)(request.Rid),
-		Code: logicserverError.CommonSuccess,
-		Desc: logicserverError.ErrorCodeToText(logicserverError.CommonSuccess),
-	}
-
-	//go xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan, request.SessionId)
-
-	return response, nil
 }
 
 // func xxxxxxxxxxxxxxxxxxx(tokenConnInfoChan chan<- int64, sessionId int64) {
