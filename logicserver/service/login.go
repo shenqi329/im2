@@ -11,7 +11,7 @@ import (
 
 func HandleLogin(deviceLoginRequest *grpcPb.DeviceLoginRequest) (protoMessage *grpcPb.DeviceLoginResponse, err error) {
 
-	id, _ := strconv.ParseInt(deviceLoginRequest.Token, 10, 64)
+	id, _ := strconv.ParseUint(deviceLoginRequest.Token, 10, 64)
 
 	tokenBean := &logicserverBean.Token{
 		Id:       id,

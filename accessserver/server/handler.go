@@ -7,7 +7,7 @@ import (
 )
 
 func Handle(context Context) error {
-	log.Println("handle")
+	//log.Println("handle")
 	protoMessage := grpcPb.Factory((grpcPb.MessageType)(context.Message().Type))
 
 	if protoMessage == nil {

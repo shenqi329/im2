@@ -13,12 +13,6 @@ import (
 
 func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*grpcPb.CreateMessageResponse, error) {
 
-	// index, err := dao.MessageMaxIndex(request.SessionId)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return nil, logicserverError.ErrorInternalServerError
-	// }
-
 	timeNow := time.Now()
 	message := &logicserverBean.Message{
 		Id:         request.Id,
@@ -42,6 +36,7 @@ func HandleCreateMessage(request *grpcPb.CreateMessageRequest, userId string) (*
 		})
 
 		for _, sessionMap := range sessionMaps {
+			log.Println(sessionMap.UserId)
 			if strings.EqualFold(sessionMap.UserId, userId) {
 				continue
 			}

@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	imserverError "im/logicserver/error"
 	grpcPb "im/logicserver/grpc/pb"
@@ -13,14 +14,17 @@ type Message struct{}
 
 func (m *Message) CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageResponse, error) {
 
-	return CreateMessage(context, request)
+	message, err := CreateMessage(context, request)
+	response := message.(*grpcPb.CreateMessageResponse)
 
+	return response, err
 }
 
-func CreateMessage(context context.Context, request *grpcPb.CreateMessageRequest) (*grpcPb.CreateMessageResponse, error) {
+func CreateMessage(context context.Context, message proto.Message) (proto.Message, error) {
+
 	log.Println("CreateMessage")
 
-	//tokenConnInfoChan := context.Value(key.TokenConnInfoChan).(chan int64)
+	request := message.(*grpcPb.CreateMessageRequest)
 	userId := context.Value(key.UserId).(string)
 
 	protoMessage, err := service.HandleCreateMessage(request, userId)

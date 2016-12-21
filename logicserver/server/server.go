@@ -9,6 +9,7 @@ import (
 	grpcPb "im/logicserver/grpc/pb"
 	"log"
 	"net"
+	"reflect"
 )
 
 type Server struct {
@@ -35,18 +36,24 @@ func (s *Server) newServer() *grpc.Server {
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx netContext.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		//log.Println("设置环境变量")
-		reply, err := handler(ctx, req)
-		if reply == nil {
+		response, err := handler(ctx, req)
+		v := reflect.ValueOf(response)
+		if !v.IsValid() || v.IsNil() {
 			request, ok := req.(logicserverGrpc.Request)
 			if ok {
-				reply = &grpcPb.Response{
+				response = &grpcPb.Response{
 					Rid:  request.GetRid(),
+					Code: logicserverError.CommonInternalServerError,
+					Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
+				}
+			} else {
+				response = &grpcPb.Response{
 					Code: logicserverError.CommonInternalServerError,
 					Desc: logicserverError.ErrorCodeToText(logicserverError.CommonInternalServerError),
 				}
 			}
 		}
-		return reply, nil
+		return response, nil
 	}))
 	return grpcServer
 }

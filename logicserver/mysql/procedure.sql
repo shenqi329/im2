@@ -1,6 +1,9 @@
 use db_im;
 
 select * from t_message;
+select * from mysql.event;
+show events;
+SET GLOBAL event_scheduler = ON;
 
 grant execute on db_im.* to im_connect@`%` identified by 'im_connect';
 show grants for im_connect;

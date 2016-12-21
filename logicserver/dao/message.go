@@ -1,51 +1,48 @@
 package dao
 
 import (
-	"database/sql"
+	//"database/sql"
 	"im/logicserver/bean"
 	"im/logicserver/mysql"
+	"log"
+	"time"
 )
-
-// DELIMITER //
-// create procedure t_message_get_increment_index(in session_id bigint(20), in type int(4) ,in context varchar(20000),in small_index bigint, out index_out bigint)
-// begin
-// declare oldindex bigint;
-// start transaction;
-// select max(t_message_index) into oldindex from t_message where t_message_session_id=session_id for update;
-// if oldindex is NULL then
-// insert into t_message(t_message_session_id,t_message_type,t_message_content,t_message_index) value(session_id, type,context,small_index);
-// set index_out=small_index;
-// else
-// insert into t_message(t_message_session_id,t_message_type,t_message_content,t_message_index) value(session_id, type,context,oldindex+1);
-// set index_out=oldindex+1;
-// end if;
-// commit;
-// end;
-// //
-// DELIMITER ;
 
 func MessageInsert(message *bean.Message) (int64, error) {
 
-	engine := mysql.GetXormEngine()
+	var err error
+	for i := 0; i < 1000; i++ {
+		index, err := MessageMaxIndexByUserId(message.UserId)
+		if err != nil {
+			return 0, err
+		}
 
-	_, err := engine.Exec("call t_message_insert(?,?,?,?,?,@p_out);", message.Id, message.SessionId, message.UserId, message.Type, message.Content)
-
-	if err != nil {
-		return 0, err
+		message.Index = index + 1
+		_, err = NewDao().Insert(message)
+		if err == nil {
+			break
+		}
+		time.Sleep((time.Duration)(i) * time.Millisecond)
 	}
-	return 1, nil
+	return 0, err
 }
 
-func MessageMaxIndex(sessionId int64) (int64, error) {
+func MessageMaxIndexByUserId(userId string) (uint64, error) {
 
 	engine := mysql.GetXormEngine()
-	sqlQuery := "select count(t_message_index) from t_message where t_message_session_id = ?"
+	sqlQuery := "select max(t_message_index) from t_message where t_message_user_id = ?"
 
-	var index int64
-	err := engine.DB().QueryRow(sqlQuery, sessionId).Scan(&index)
-	if err == sql.ErrNoRows || err == nil {
-		return index, nil
+	var index interface{}
+	err := engine.DB().QueryRow(sqlQuery, userId).Scan(&index)
+	if err != nil {
+		log.Println(err)
+		return 0, err
 	}
-
+	log.Println(index)
+	ret, ok := index.(int64)
+	if ok {
+		log.Println(ret)
+		return (uint64)(ret), nil
+	}
 	return 0, err
 }
